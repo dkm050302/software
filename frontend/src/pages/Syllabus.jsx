@@ -3,374 +3,390 @@ import {
   Box,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
-  Menu,
-  MenuItem,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
   Paper,
-  Collapse,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Checkbox,
+  Grid,
+  Alert,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider
 } from "@mui/material";
 import {
   Add as AddIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  MoreVert as MoreVertIcon,
+  CloudUpload as CloudUploadIcon,
+  Refresh as RefreshIcon,
+  Save as SaveIcon,
+  Delete as DeleteIcon
 } from "@mui/icons-material";
 import api from "../services/api";
 
 export default function Syllabus() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogType, setDialogType] = useState("add"); // 'add', 'edit', 'addChild'
-  const [currentTag, setCurrentTag] = useState(null);
-  const [parentTagId, setParentTagId] = useState(null);
-  const [formData, setFormData] = useState({ name: "", content: "" });
-  const [contextMenu, setContextMenu] = useState(null);
-  const [expandedTags, setExpandedTags] = useState(new Set());
-  const [showContent, setShowContent] = useState(true); // 控制是否显示标签备注
+  const [saving, setSaving] = useState(false);
+  
+  // Single Add State
+  const [newChapter, setNewChapter] = useState("");
+  const [newKnowledgePoint, setNewKnowledgePoint] = useState("");
+  
+  // Selection State
+  const [selectedIds, setSelectedIds] = useState([]);
+  
+  // Filter State
+  const [filterChapter, setFilterChapter] = useState("All");
+  const [filterKnowledgePoint, setFilterKnowledgePoint] = useState("All");
+  
+  // Duplicate Warning
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
 
   useEffect(() => {
-    // 从token中获取真实的user_type，确保一致性
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
-    try {
-      // 解码 token 获取真实的 user_type
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const actualUserType = payload.user_type;
-
-      // 如果token中的user_type不是teacher，拒绝访问
-      if (actualUserType !== "teacher") {
-        alert("只有教师才能访问教学大纲。当前用户类型：" + actualUserType);
-        window.location.href = "/";
-        return;
-      }
-
-      // 更新localStorage中的userType，确保一致性
-      localStorage.setItem("userType", actualUserType);
-
-      fetchTags();
-    } catch (e) {
-      console.error("Error decoding token:", e);
-      alert("Token解析失败，请重新登录");
-      localStorage.clear();
-      window.location.href = "/login";
-    }
+    fetchTags();
   }, []);
 
-  const fetchTags = async () => {
+  const fetchTags = async (refresh = false) => {
+    setLoading(true);
     try {
-      const response = await api.get("/syllabus/tags");
+      const response = await api.get(`/syllabus/tags?refresh=${refresh}`);
       setTags(response.data);
+      // Reset filters if current selection no longer exists? Maybe keep them.
     } catch (error) {
       console.error("Error fetching tags:", error);
-      if (error.response) {
-        console.error("Error details:", error.response.data);
-        // 如果是权限错误，提示用户重新登录
-        if (error.response.status === 403) {
-          alert(
-            `权限错误: ${error.response.data.detail}\n请确保使用教师身份登录。如果问题持续，请清除浏览器缓存并重新登录。`
-          );
-        }
-      }
+      alert("Failed to load tags.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddRootTag = () => {
-    setDialogType("add");
-    setCurrentTag(null);
-    setParentTagId(null);
-    setFormData({ name: "", content: "" });
-    setOpenDialog(true);
-  };
-
-  const handleEditTag = (tag) => {
-    setDialogType("edit");
-    setCurrentTag(tag);
-    setParentTagId(null);
-    setFormData({ name: tag.name, content: tag.content || "" });
-    setOpenDialog(true);
-    setContextMenu(null);
-  };
-
-  const handleAddChildTag = (parentTag) => {
-    setDialogType("addChild");
-    setCurrentTag(null);
-    setParentTagId(parentTag.id);
-    setFormData({ name: "", content: "" });
-    setOpenDialog(true);
-    setContextMenu(null);
-  };
-
-  const handleDeleteTag = async (tag) => {
-    if (window.confirm(`确定要删除标签"${tag.name}"及其所有子标签吗？`)) {
-      try {
-        await api.delete(`/syllabus/tags/${tag.id}`);
-        fetchTags();
-        // 从展开列表中移除
-        const newExpanded = new Set(expandedTags);
-        newExpanded.delete(tag.id);
-        setExpandedTags(newExpanded);
-      } catch (error) {
-        console.error("Error deleting tag:", error);
-        alert("删除失败");
-      }
+  const handleRefresh = () => {
+    if (window.confirm("Refreshing will discard unsaved changes. Continue?")) {
+      fetchTags(true);
     }
-    setContextMenu(null);
   };
 
-  const handleDialogSubmit = async () => {
-    if (!formData.name.trim()) {
-      alert("请输入标签名称");
+  const handleSave = async () => {
+    if (!window.confirm("This will overwrite the database with current list. Continue?")) return;
+    
+    setSaving(true);
+    try {
+      await api.post("/syllabus/tags/save", tags);
+      alert("Saved successfully!");
+      fetchTags(true); // Refresh to ensure sync
+    } catch (error) {
+      console.error("Error saving tags:", error);
+      alert("Failed to save tags.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSingleAdd = () => {
+    if (!newChapter.trim() || !newKnowledgePoint.trim()) {
+      alert("Please fill in both Chapter and Knowledge Point");
       return;
     }
+    
+    // Check duplicate
+    const exists = tags.some(
+      t => t.chapter === newChapter.trim() && t.knowledge_point === newKnowledgePoint.trim()
+    );
+    
+    if (exists) {
+      alert("This tag already exists!");
+      return;
+    }
+    
+    const newTag = {
+      id: `temp-${Date.now()}`, // Temp ID
+      chapter: newChapter.trim(),
+      knowledge_point: newKnowledgePoint.trim()
+    };
+    
+    setTags([...tags, newTag]);
+    setNewChapter("");
+    setNewKnowledgePoint("");
+  };
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
     try {
-      if (dialogType === "add" || dialogType === "addChild") {
-        await api.post("/syllabus/tags", {
-          name: formData.name,
-          content: formData.content,
-          parent_id: dialogType === "addChild" ? parentTagId : null,
-          order: 0,
-        });
-      } else if (dialogType === "edit") {
-        await api.put(`/syllabus/tags/${currentTag.id}`, {
-          name: formData.name,
-          content: formData.content,
-        });
+      const response = await api.post("/syllabus/import/excel", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      const importedTags = response.data;
+      const newTags = [];
+      const duplicates = [];
+      
+      importedTags.forEach(item => {
+        // Check against current tags (including unsaved ones)
+        const exists = tags.some(
+          t => t.chapter === item.chapter && t.knowledge_point === item.knowledge_point
+        ) || newTags.some(
+          t => t.chapter === item.chapter && t.knowledge_point === item.knowledge_point
+        );
+        
+        if (exists) {
+          duplicates.push(`${item.chapter} - ${item.knowledge_point}`);
+        } else {
+          newTags.push({
+            id: `temp-${Date.now()}-${Math.random()}`,
+            chapter: item.chapter,
+            knowledge_point: item.knowledge_point
+          });
+        }
+      });
+      
+      if (duplicates.length > 0) {
+        setDuplicateWarning(`Skipped ${duplicates.length} duplicates:\n${duplicates.slice(0, 5).join("\n")}${duplicates.length > 5 ? "\n..." : ""}`);
+      } else {
+        setDuplicateWarning(null);
       }
-      setOpenDialog(false);
-      fetchTags();
-      // 如果是添加子标签，展开父标签
-      if (dialogType === "addChild") {
-        const newExpanded = new Set(expandedTags);
-        newExpanded.add(parentTagId);
-        setExpandedTags(newExpanded);
+      
+      if (newTags.length > 0) {
+        setTags([...tags, ...newTags]);
+        alert(`Imported ${newTags.length} tags.`);
+      } else if (duplicates.length === 0) {
+        alert("No tags found in file.");
       }
+      
     } catch (error) {
-      console.error("Error saving tag:", error);
-      alert("保存失败");
+      console.error("Error importing file:", error);
+      alert(error.response?.data?.detail || "Import failed");
     }
+    
+    // Reset input
+    event.target.value = null;
   };
 
-  const handleContextMenu = (event, tag) => {
-    event.preventDefault();
-    setContextMenu({
-      mouseX: event.clientX - 2,
-      mouseY: event.clientY - 4,
-      tag: tag,
-    });
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.length} selected tags?`)) return;
+    
+    setTags(tags.filter(t => !selectedIds.includes(t.id)));
+    setSelectedIds([]);
   };
 
-  const handleCloseContextMenu = () => {
-    setContextMenu(null);
-  };
-
-  const toggleExpand = (tagId) => {
-    const newExpanded = new Set(expandedTags);
-    if (newExpanded.has(tagId)) {
-      newExpanded.delete(tagId);
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelectedIds(filteredTags.map(t => t.id));
     } else {
-      newExpanded.add(tagId);
+      setSelectedIds([]);
     }
-    setExpandedTags(newExpanded);
   };
 
-  const renderTag = (tag, level = 0) => {
-    const hasChildren = tag.children && tag.children.length > 0;
-    const isExpanded = expandedTags.has(tag.id);
-
-    return (
-      <React.Fragment key={tag.id}>
-        <ListItem
-          sx={{
-            pl: 2 + level * 3,
-            py: 1,
-            "&:hover": {
-              backgroundColor: "action.hover",
-            },
-          }}
-          onContextMenu={(e) => handleContextMenu(e, tag)}
-        >
-          {hasChildren && (
-            <IconButton
-              size="small"
-              onClick={() => toggleExpand(tag.id)}
-              sx={{ mr: 1 }}
-            >
-              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </IconButton>
-          )}
-          {!hasChildren && <Box sx={{ width: 40 }} />}
-          <ListItemText
-            primary={
-              <Typography variant="body1" fontWeight="medium">
-                {tag.name}
-              </Typography>
-            }
-            secondary={
-              showContent &&
-              tag.content && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5 }}
-                >
-                  {tag.content}
-                </Typography>
-              )
-            }
-          />
-          <IconButton size="small" onClick={(e) => handleContextMenu(e, tag)}>
-            <MoreVertIcon />
-          </IconButton>
-        </ListItem>
-        {hasChildren && (
-          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {tag.children.map((child) => renderTag(child, level + 1))}
-            </List>
-          </Collapse>
-        )}
-      </React.Fragment>
-    );
+  const handleSelectOne = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(sid => sid !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
   };
 
-  if (loading) {
-    return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          教学大纲
-        </Typography>
-        <Typography>加载中...</Typography>
-      </Box>
-    );
-  }
+  // Filtering Logic
+  const uniqueChapters = ["All", ...new Set(tags.map(t => t.chapter))];
+  const uniqueKnowledgePoints = ["All", ...new Set(tags.filter(t => filterChapter === "All" || t.chapter === filterChapter).map(t => t.knowledge_point))];
+
+  const filteredTags = tags.filter(t => {
+    const matchChapter = filterChapter === "All" || t.chapter === filterChapter;
+    const matchPoint = filterKnowledgePoint === "All" || t.knowledge_point === filterKnowledgePoint;
+    return matchChapter && matchPoint;
+  });
 
   return (
-    <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">教学大纲</Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => setShowContent(!showContent)}
-          >
-            {showContent ? "隐藏标签备注" : "显示标签备注"}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddRootTag}
-          >
-            添加根标签
-          </Button>
-        </Box>
-      </Box>
-
-      <Paper>
-        {tags.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: "center" }}>
-            <Typography color="text.secondary">
-              暂无标签，点击"添加根标签"开始创建
-            </Typography>
-          </Box>
-        ) : (
-          <List>{tags.map((tag) => renderTag(tag))}</List>
-        )}
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>Knowledge Syllabus Manager</Typography>
+      
+      {/* Actions Bar */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item>
+            <Button 
+              variant="outlined" 
+              startIcon={<RefreshIcon />} 
+              onClick={handleRefresh}
+            >
+              Refresh (Discard Changes)
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              startIcon={<SaveIcon />} 
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Confirm & Save to DB"}
+            </Button>
+          </Grid>
+        </Grid>
       </Paper>
 
-      {/* 添加/编辑对话框 */}
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {dialogType === "add"
-            ? "添加根标签"
-            : dialogType === "addChild"
-            ? "添加子标签"
-            : "编辑标签"}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="标签名称"
-            fullWidth
-            variant="outlined"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="标签说明"
-            fullWidth
-            multiline
-            rows={4}
-            variant="outlined"
-            value={formData.content}
-            onChange={(e) =>
-              setFormData({ ...formData, content: e.target.value })
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button onClick={handleDialogSubmit} variant="contained">
-            确定
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Add Section */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Single Add */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>Add Single Tag</Typography>
+            <Box display="flex" gap={2} flexDirection="column">
+              <TextField 
+                label="Chapter" 
+                value={newChapter} 
+                onChange={(e) => setNewChapter(e.target.value)} 
+                fullWidth 
+              />
+              <TextField 
+                label="Knowledge Point" 
+                value={newKnowledgePoint} 
+                onChange={(e) => setNewKnowledgePoint(e.target.value)} 
+                fullWidth 
+              />
+              <Button 
+                variant="contained" 
+                startIcon={<AddIcon />} 
+                onClick={handleSingleAdd}
+              >
+                Add
+              </Button>
+            </Box>
+          </Paper>
+        </Grid>
 
-      {/* 右键菜单 */}
-      <Menu
-        open={contextMenu !== null}
-        onClose={handleCloseContextMenu}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : undefined
-        }
-      >
-        {contextMenu && (
-          <>
-            <MenuItem onClick={() => handleEditTag(contextMenu.tag)}>
-              修改
-            </MenuItem>
-            <MenuItem onClick={() => handleAddChildTag(contextMenu.tag)}>
-              添加子标签
-            </MenuItem>
-            <MenuItem onClick={() => handleDeleteTag(contextMenu.tag)}>
-              删除
-            </MenuItem>
-          </>
-        )}
-      </Menu>
+        {/* Batch Import */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>Batch Import (Excel)</Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Upload .xlsx file with headers: <strong>chapter</strong>, <strong>knowledge_point</strong>
+            </Typography>
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<CloudUploadIcon />}
+              fullWidth
+              sx={{ height: 56 }}
+            >
+              Upload Excel File
+              <input type="file" hidden onChange={handleFileUpload} accept=".xlsx, .xls" />
+            </Button>
+            {duplicateWarning && (
+              <Alert severity="warning" sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
+                {duplicateWarning}
+              </Alert>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Display & Filter Section */}
+      <Paper sx={{ p: 2 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
+          <Box display="flex" gap={2}>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Filter Chapter</InputLabel>
+              <Select
+                value={filterChapter}
+                label="Filter Chapter"
+                onChange={(e) => {
+                  setFilterChapter(e.target.value);
+                  setFilterKnowledgePoint("All"); // Reset point filter
+                }}
+              >
+                {uniqueChapters.map(c => (
+                  <MenuItem key={c} value={c}>{c}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Filter Point</InputLabel>
+              <Select
+                value={filterKnowledgePoint}
+                label="Filter Point"
+                onChange={(e) => setFilterKnowledgePoint(e.target.value)}
+              >
+                {uniqueKnowledgePoints.map(p => (
+                  <MenuItem key={p} value={p}>{p}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          
+          <Button 
+            variant="contained" 
+            color="error" 
+            startIcon={<DeleteIcon />} 
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.length === 0}
+          >
+            Delete Selected ({selectedIds.length})
+          </Button>
+        </Box>
+
+        <TableContainer sx={{ maxHeight: 500 }}>
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedIds.length > 0 && selectedIds.length < filteredTags.length}
+                    checked={filteredTags.length > 0 && selectedIds.length === filteredTags.length}
+                    onChange={handleSelectAll}
+                  />
+                </TableCell>
+                <TableCell>Chapter</TableCell>
+                <TableCell>Knowledge Point</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center"><CircularProgress /></TableCell>
+                </TableRow>
+              ) : filteredTags.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">No tags found</TableCell>
+                </TableRow>
+              ) : (
+                filteredTags.map((tag) => (
+                  <TableRow key={tag.id} hover>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedIds.includes(tag.id)}
+                        onChange={() => handleSelectOne(tag.id)}
+                      />
+                    </TableCell>
+                    <TableCell>{tag.chapter}</TableCell>
+                    <TableCell>{tag.knowledge_point}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+          Total: {tags.length} | Displayed: {filteredTags.length}
+        </Typography>
+      </Paper>
     </Box>
   );
 }
+
+
+
+
+

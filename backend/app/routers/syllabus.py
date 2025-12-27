@@ -1,216 +1,182 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List, Optional
 from datetime import datetime
+import json
+import os
+import pandas as pd
+import io
 from app import models, schemas
 from app.dependencies import get_db, get_current_user
 
 router = APIRouter()
 
-def delete_tag_and_children(db: Session, tag_id: int):
-    """递归删除标签及其所有子标签"""
-    # 先删除所有子标签
-    children = db.query(models.KnowledgeTag).filter(models.KnowledgeTag.parent_id == tag_id).all()
-    for child in children:
-        delete_tag_and_children(db, child.id)
-    # 删除当前标签
-    tag = db.query(models.KnowledgeTag).filter(models.KnowledgeTag.id == tag_id).first()
-    if tag:
-        db.delete(tag)
+CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data_cache")
 
-def build_tag_tree(tags: List[models.KnowledgeTag], parent_id: Optional[int] = None) -> List[dict]:
-    """构建树形结构"""
-    result = []
-    for tag in tags:
-        if tag.parent_id == parent_id:
-            tag_dict = {
-                "id": tag.id,
-                "name": tag.name,
-                "content": tag.content,
-                "parent_id": tag.parent_id,
-                "teacher_id": tag.teacher_id,
-                "order": tag.order,
-                "created_at": tag.created_at.isoformat() if tag.created_at else None,
-                "updated_at": tag.updated_at.isoformat() if tag.updated_at else None,
-                "children": build_tag_tree(tags, tag.id)
-            }
-            result.append(tag_dict)
-    # 按order排序
-    result.sort(key=lambda x: x["order"])
-    return result
+def get_teacher_cache_file(teacher_id: int):
+    return os.path.join(CACHE_DIR, f"teacher_{teacher_id}_tags.json")
 
 @router.get("/tags")
 def get_tags(
+    refresh: bool = False,
     db: Session = Depends(get_db),
     current_user_data: dict = Depends(get_current_user)
 ):
-    """获取当前教师的所有标签（树形结构）"""
+    """
+    获取当前教师的所有标签。
+    如果 refresh=True，强制从数据库读取并更新缓存。
+    否则优先读取缓存。
+    """
     user_type = current_user_data.get("user_type")
     if user_type != "teacher":
-        raise HTTPException(
-            status_code=403, 
-            detail=f"Only teachers can access this resource. Current user type: {user_type}"
-        )
+        raise HTTPException(status_code=403, detail="Only teachers can access syllabus")
     
-    teacher = current_user_data["user"]
-    tags = db.query(models.KnowledgeTag).filter(
-        models.KnowledgeTag.teacher_id == teacher.id
-    ).all()
+    teacher_id = current_user_data["user"].id
+    cache_file = get_teacher_cache_file(teacher_id)
     
-    # 构建树形结构
-    tree = build_tag_tree(tags, None)
-    return tree
+    # Ensure cache dir exists
+    os.makedirs(CACHE_DIR, exist_ok=True)
 
-@router.post("/tags")
-def create_tag(
-    tag: schemas.KnowledgeTagCreate,
+    # If not refreshing and cache exists, return cache
+    if not refresh and os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error reading cache: {e}")
+            # Fallback to DB
+    
+    # Fetch from DB
+    tags = db.query(models.KnowledgeTag).filter(models.KnowledgeTag.teacher_id == teacher_id).all()
+    data = []
+    for tag in tags:
+        data.append({
+            "id": tag.id, # Keep ID for reference, though frontend might generate temp IDs for new ones
+            "subject": tag.subject,
+            "chapter": tag.chapter,
+            "knowledge_point": tag.knowledge_point
+        })
+    
+    # Write to cache
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        
+    return data
+
+@router.post("/tags/save")
+def save_tags(
+    tags: List[dict],
     db: Session = Depends(get_db),
     current_user_data: dict = Depends(get_current_user)
 ):
-    """创建标签"""
+    """
+    保存标签：
+    1. 更新缓存 JSON
+    2. 更新数据库 (全量替换该教师的标签)
+    """
     user_type = current_user_data.get("user_type")
     if user_type != "teacher":
-        raise HTTPException(
-            status_code=403, 
-            detail=f"Only teachers can access this resource. Current user type: {user_type}"
-        )
+        raise HTTPException(status_code=403, detail="Only teachers can access syllabus")
     
-    teacher = current_user_data["user"]
+    teacher_id = current_user_data["user"].id
+    teacher_subject = current_user_data["user"].subject
+    print(f"Saving tags for teacher {teacher_id}, subject: {teacher_subject}. Count: {len(tags)}")
     
-    # 如果指定了parent_id，验证父标签是否存在且属于当前教师
-    if tag.parent_id:
-        parent_tag = db.query(models.KnowledgeTag).filter(
-            and_(
-                models.KnowledgeTag.id == tag.parent_id,
-                models.KnowledgeTag.teacher_id == teacher.id
+    cache_file = get_teacher_cache_file(teacher_id)
+    
+    # 1. Update Cache
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump(tags, f, ensure_ascii=False, indent=2)
+        
+    # 2. Update Database
+    try:
+        # Delete existing tags for this teacher
+        # We use synchronize_session=False because we are going to commit anyway
+        db.query(models.KnowledgeTag).filter(models.KnowledgeTag.teacher_id == teacher_id).delete(synchronize_session=False)
+        
+        # Insert new tags
+        new_objects = []
+        for item in tags:
+            # Requirement: id is auto-generated by DB, so we don't set it.
+            # Requirement: teacher_id is the current teacher's id.
+            # Requirement: subject is the teacher's subject.
+            
+            # Use teacher's subject. If the item has a subject (e.g. from previous load), we could use it,
+            # but the requirement says "subject is this teacher's subject". 
+            # So we strictly enforce teacher's subject to ensure consistency.
+            subject = teacher_subject
+            
+            # Validate required fields
+            chapter = item.get("chapter")
+            knowledge_point = item.get("knowledge_point")
+            
+            if not chapter or not knowledge_point:
+                continue # Skip invalid entries
+            
+            new_tag = models.KnowledgeTag(
+                teacher_id=teacher_id,
+                subject=subject,
+                chapter=str(chapter).strip(),
+                knowledge_point=str(knowledge_point).strip()
             )
-        ).first()
-        if not parent_tag:
-            raise HTTPException(status_code=404, detail="Parent tag not found")
-    
-    # 创建新标签
-    db_tag = models.KnowledgeTag(
-        name=tag.name,
-        content=tag.content,
-        parent_id=tag.parent_id,
-        teacher_id=teacher.id,
-        order=tag.order or 0,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    db.add(db_tag)
-    db.commit()
-    db.refresh(db_tag)
-    
-    return {
-        "id": db_tag.id,
-        "name": db_tag.name,
-        "content": db_tag.content,
-        "parent_id": db_tag.parent_id,
-        "teacher_id": db_tag.teacher_id,
-        "order": db_tag.order,
-        "created_at": db_tag.created_at.isoformat() if db_tag.created_at else None,
-        "updated_at": db_tag.updated_at.isoformat() if db_tag.updated_at else None,
-        "children": []
-    }
+            new_objects.append(new_tag)
+            
+        if new_objects:
+            db.add_all(new_objects)
+            
+        db.commit()
+        print(f"Successfully saved {len(new_objects)} tags to DB for teacher {teacher_id}.")
+        return {"message": "Tags saved successfully", "count": len(new_objects)}
+    except Exception as e:
+        print(f"Error saving tags to DB: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-@router.put("/tags/{tag_id}")
-def update_tag(
-    tag_id: int,
-    tag_update: schemas.KnowledgeTagUpdate,
-    db: Session = Depends(get_db),
+@router.post("/import/excel")
+async def import_excel(
+    file: UploadFile = File(...),
     current_user_data: dict = Depends(get_current_user)
 ):
-    """更新标签"""
+    """
+    解析 Excel 文件并返回数据列表。
+    不直接保存到数据库，由前端确认后保存。
+    """
     user_type = current_user_data.get("user_type")
     if user_type != "teacher":
-        raise HTTPException(
-            status_code=403, 
-            detail=f"Only teachers can access this resource. Current user type: {user_type}"
-        )
+        raise HTTPException(status_code=403, detail="Only teachers can access syllabus")
     
-    teacher = current_user_data["user"]
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Invalid file format. Please upload .xlsx or .xls")
     
-    db_tag = db.query(models.KnowledgeTag).filter(
-        and_(
-            models.KnowledgeTag.id == tag_id,
-            models.KnowledgeTag.teacher_id == teacher.id
-        )
-    ).first()
-    
-    if not db_tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
-    
-    # 更新字段
-    if tag_update.name is not None:
-        db_tag.name = tag_update.name
-    if tag_update.content is not None:
-        db_tag.content = tag_update.content
-    if tag_update.order is not None:
-        db_tag.order = tag_update.order
-    
-    db_tag.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(db_tag)
-    
-    # 获取子标签
-    children = db.query(models.KnowledgeTag).filter(
-        models.KnowledgeTag.parent_id == tag_id
-    ).all()
-    children_list = [{
-        "id": child.id,
-        "name": child.name,
-        "content": child.content,
-        "parent_id": child.parent_id,
-        "teacher_id": child.teacher_id,
-        "order": child.order,
-        "created_at": child.created_at.isoformat() if child.created_at else None,
-        "updated_at": child.updated_at.isoformat() if child.updated_at else None,
-        "children": []
-    } for child in children]
-    
-    return {
-        "id": db_tag.id,
-        "name": db_tag.name,
-        "content": db_tag.content,
-        "parent_id": db_tag.parent_id,
-        "teacher_id": db_tag.teacher_id,
-        "order": db_tag.order,
-        "created_at": db_tag.created_at.isoformat() if db_tag.created_at else None,
-        "updated_at": db_tag.updated_at.isoformat() if db_tag.updated_at else None,
-        "children": children_list
-    }
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents))
+        
+        # Normalize columns: strip whitespace
+        df.columns = df.columns.str.strip()
+        
+        # Handle common typos
+        if 'knowledege_point' in df.columns:
+            df.rename(columns={'knowledege_point': 'knowledge_point'}, inplace=True)
+            
+        # Check headers
+        required_columns = ['chapter', 'knowledge_point']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+             raise HTTPException(status_code=400, detail=f"Missing columns. Required: {required_columns}. Missing: {missing_columns}. Found: {list(df.columns)}")
+        
+        # Extract data
+        result = []
+        for _, row in df.iterrows():
+            result.append({
+                "chapter": str(row['chapter']).strip(),
+                "knowledge_point": str(row['knowledge_point']).strip()
+            })
+            
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-@router.delete("/tags/{tag_id}")
-def delete_tag(
-    tag_id: int,
-    db: Session = Depends(get_db),
-    current_user_data: dict = Depends(get_current_user)
-):
-    """删除标签及其所有子标签"""
-    user_type = current_user_data.get("user_type")
-    if user_type != "teacher":
-        raise HTTPException(
-            status_code=403, 
-            detail=f"Only teachers can access this resource. Current user type: {user_type}"
-        )
-    
-    teacher = current_user_data["user"]
-    
-    db_tag = db.query(models.KnowledgeTag).filter(
-        and_(
-            models.KnowledgeTag.id == tag_id,
-            models.KnowledgeTag.teacher_id == teacher.id
-        )
-    ).first()
-    
-    if not db_tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
-    
-    # 递归删除标签及其所有子标签
-    delete_tag_and_children(db, tag_id)
-    db.commit()
-    
-    return {"message": "Tag deleted successfully"}
 

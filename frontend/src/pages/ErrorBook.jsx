@@ -54,7 +54,17 @@ export default function ErrorBook() {
       }
     };
     fetchData();
-  }, []);
+    // Poll for knowledge tags updates every 1 minute
+    const intervalId = setInterval(async () => {
+      try {
+        const tagsRes = await api.get('/errors/knowledge-tags');
+        setKnowledgeTags(tagsRes.data);
+      } catch (error) {
+        console.error("Error polling knowledge tags:", error);
+      }
+    }, 60000);
+
+    return () => clearInterval(intervalId);  }, []);
 
   // Derived Options
   const availableSubjects = studentInfo?.teachers?.map(t => t.subject).filter(Boolean) || [];

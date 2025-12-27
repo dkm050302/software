@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin
+from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin, syllabus
 from app.database import engine
 from app import models
 from app.services import data_sync
@@ -45,6 +45,7 @@ app.include_router(error_book.router, prefix="/api/errors", tags=["Error Book"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(parent_view.router, prefix="/api/parents", tags=["Parent View"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(syllabus.router, prefix="/api/syllabus", tags=["Syllabus"])
 
 @app.get("/")
 async def root():
