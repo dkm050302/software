@@ -98,6 +98,7 @@ class LLMService:
     async def generate_mistake_tip(self, question_text: str, subject: str = "") -> str:
         prompt = f"""
         请对以下题目进行简短分析。
+        
         要求：
         1. 必须以“这是一道{subject}题目分析：”开头。
         2. 只需列出题目涉及的知识点，不要讲解具体内容或解题步骤。
@@ -154,6 +155,18 @@ class LLMService:
         except Exception as e:
             print(f"Error generating report: {e}")
             return "无法生成报告。"
+
+    async def generate_simple_chat(self, prompt_text: str) -> str:
+        messages = [
+            {"role": "system", "content": "你是一个学习助手，负责统计学生的错题情况。"},
+            {"role": "user", "content": prompt_text}
+        ]
+        try:
+            response = await self._call_deepseek(messages)
+            return response["choices"][0]["message"]["content"]
+        except Exception as e:
+            print(f"LLM Error: {e}")
+            return "无法生成统计报告。"
 
     async def generate_parent_report(self, student_data: dict) -> str:
         prompt = f"""

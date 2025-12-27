@@ -145,6 +145,19 @@ class StudentTip(Base):
     student = relationship("Student")
 
 
+# 新增：学生错题统计表
+class StudentSumUp(Base):
+    __tablename__ = "student_sum_ups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(String, ForeignKey("students.student_id"), nullable=False)
+    tip = Column(Text, nullable=True)  # 存储JSON格式的统计结果
+    time = Column(DateTime, default=datetime.now)  # 生成时间
+
+    # 关系
+    student = relationship("Student")
+
+
 # 知识标签表（教学大纲）
 class KnowledgeTag(Base):
     __tablename__ = "knowledge_tags"

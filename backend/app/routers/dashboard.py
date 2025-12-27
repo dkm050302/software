@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import json
 import os
+import asyncio
 from .. import models, schemas
 from ..database import get_db
 from ..dependencies import get_current_user
@@ -172,10 +173,20 @@ async def analyze_weekly_report(
         except:
             pass
 
+    # 用于 StudentSumUp 的数据收集
+    sum_up_data = {}
+    
+    # 存储 LLM 任务
+    tasks = []
+    task_subjects = []
+
     for sub in subjects_to_analyze:
         # Collect data for this subject
         sub_data = {"mistakes": [], "notes": []}
         
+        # 收集用于 SumUp 的错题 tip 列表
+        mistake_tips_for_sumup = []
+
         if sub == "General":
             # Collect ALL data
             mistakes = db.query(models.LearningMistake).filter(
@@ -200,13 +211,17 @@ async def analyze_weekly_report(
 
         for m in mistakes:
             sub_data["mistakes"].append({
-                "content": m.content,
+                "content": m.note if m.note else "无笔记内容",
                 "knowledge_point": m.knowledge_point,
                 "tip": m.tip
             })
+            # 收集 tip 用于 SumUp
+            if m.tip:
+                mistake_tips_for_sumup.append(m.tip)
+
         for n in notes:
             sub_data["notes"].append({
-                "content": n.content,
+                "content": n.content if n.content else "无内容",
                 "knowledge_point": n.knowledge_point,
                 "tip": n.tip
             })
@@ -214,9 +229,22 @@ async def analyze_weekly_report(
         # Update JSON file data
         full_data[sub] = sub_data
         
-        # Call LLM
-        report_content = await llm_service.generate_weekly_analysis(sub_data, sub)
-        updated_reports[sub] = report_content
+        # Create LLM task (do not await here)
+        tasks.append(llm_service.generate_weekly_analysis(sub_data, sub))
+        task_subjects.append(sub)
+
+        # 收集 SumUp 数据 (按学科分段)
+        if sub != "General" and mistake_tips_for_sumup:
+             sum_up_data[sub] = mistake_tips_for_sumup
+
+    # 并行执行所有 LLM 任务
+    if tasks:
+        llm_results = await asyncio.gather(*tasks)
+        
+        # 将结果填回 updated_reports
+        for i, result in enumerate(llm_results):
+            sub_name = task_subjects[i]
+            updated_reports[sub_name] = result
 
     # 4. Save JSON file
     with open(file_path, 'w', encoding='utf-8') as f:
@@ -234,6 +262,31 @@ async def analyze_weekly_report(
         )
         db.add(new_tip)
     
+    # 6. Process StudentSumUp (New Logic)
+    if sum_up_data:
+        sum_up_prompt_content = "请根据以下各学科的错题提示(Tips)，统计当前学生的错题情况。输出格式要求：每个学科一段，描述有多少错题，主要涉及哪些知识点。\n\n"
+        for s_sub, s_tips in sum_up_data.items():
+            sum_up_prompt_content += f"【{s_sub}】:\n" + "\n".join(s_tips) + "\n\n"
+        
+        sum_up_result = await llm_service.generate_simple_chat(sum_up_prompt_content) 
+        
+        # Save to DB (StudentSumUp)
+        existing_sum_up = db.query(models.StudentSumUp).filter(
+            models.StudentSumUp.student_id == user.student_id,
+            models.StudentSumUp.time >= start_week
+        ).first()
+
+        if existing_sum_up:
+            existing_sum_up.tip = sum_up_result
+            existing_sum_up.time = datetime.now()
+        else:
+            new_sum_up = models.StudentSumUp(
+                student_id=user.student_id,
+                tip=sum_up_result,
+                time=datetime.now()
+            )
+            db.add(new_sum_up)
+
     db.commit()
     
     return updated_reports

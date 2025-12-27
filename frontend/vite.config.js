@@ -11,6 +11,15 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            // Suppress ECONNREFUSED errors which happen when backend is starting up
+            if (err.code === 'ECONNREFUSED') {
+              return;
+            }
+            console.log('proxy error', err);
+          });
+        }
       }
     }
   }

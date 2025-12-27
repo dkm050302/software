@@ -20,10 +20,24 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to handle 401 errors
+// Add a response interceptor to handle 401 errors and retry on 502/504
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Retry logic for connection errors (backend starting up)
+    // Vite proxy returns 504 Gateway Timeout or 502 Bad Gateway when target is unreachable
+    if (error.response && (error.response.status === 504 || error.response.status === 502) && originalRequest) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      
+      // Retry up to 5 times with 2 second delay
+      if (originalRequest._retryCount <= 5) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return api(originalRequest);
+      }
+    }
+
     if (error.response && error.response.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('token');
