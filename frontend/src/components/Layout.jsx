@@ -15,6 +15,7 @@ import {
   Toolbar,
   Typography,
   Button,
+  Collapse,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -26,12 +27,15 @@ import {
   AdminPanelSettings as AdminIcon,
   Logout as LogoutIcon,
   MenuBook as MenuBookIcon,
+  ExpandLess,
+  ExpandMore,
 } from "@mui/icons-material";
 
 const drawerWidth = 240;
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [errorBookOpen, setErrorBookOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -105,17 +109,50 @@ export default function Layout() {
       </Toolbar>
       <Divider />
       <List sx={{ flexGrow: 1 }}>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {menuItems.map((item) => {
+          if (item.text === "Error Book") {
+            return (
+              <React.Fragment key={item.text}>
+                <ListItem disablePadding>
+                  <ListItemButton onClick={() => setErrorBookOpen(!errorBookOpen)}>
+                    <ListItemIcon>{item.icon}</ListItemIcon>
+                    <ListItemText primary={item.text} />
+                    {errorBookOpen ? <ExpandLess /> : <ExpandMore />}
+                  </ListItemButton>
+                </ListItem>
+                <Collapse in={errorBookOpen} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    <ListItemButton 
+                      sx={{ pl: 4 }} 
+                      selected={location.pathname === '/errors/create'} 
+                      onClick={() => navigate('/errors/create')}
+                    >
+                      <ListItemText primary="Create Error Book" />
+                    </ListItemButton>
+                    <ListItemButton 
+                      sx={{ pl: 4 }} 
+                      selected={location.pathname === '/errors/view'} 
+                      onClick={() => navigate('/errors/view')}
+                    >
+                      <ListItemText primary="View Error Book" />
+                    </ListItemButton>
+                  </List>
+                </Collapse>
+              </React.Fragment>
+            );
+          }
+          return (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => navigate(item.path)}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
       </List>
       <Box sx={{ p: 2, textAlign: "left" }}>
         <Typography sx={{ fontSize: "28px", color: "text.secondary" }}>

@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import NoteAssistant from "./pages/NoteAssistant";
 import MapGeneration from "./pages/MapGeneration";
 import ErrorBook from "./pages/ErrorBook";
+import ViewErrorBook from "./pages/ViewErrorBook";
 import ParentView from "./pages/ParentView";
 import Admin from "./pages/Admin";
 import Syllabus from "./pages/Syllabus";
@@ -84,7 +85,8 @@ function App() {
         <Route index element={<DashboardRoute />} />
         <Route path="notes" element={<NoteAssistant />} />
         <Route path="maps" element={<MapGeneration />} />
-        <Route path="errors" element={<ErrorBook />} />
+        <Route path="errors/create" element={<ErrorBook />} />
+        <Route path="errors/view" element={<ViewErrorBook />} />
         <Route path="parents" element={<ParentView />} />
         <Route
           path="syllabus"

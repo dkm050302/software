@@ -5,6 +5,99 @@ from datetime import timedelta
 from typing import Optional
 from app import database, models, schemas, auth_utils, config
 from app.dependencies import get_db, get_current_user
+import os
+import json
+from datetime import datetime
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.pagesizes import A4
+
+ARCHIVE_DIR = "data_cache/archived_reports"
+if not os.path.exists(ARCHIVE_DIR):
+    os.makedirs(ARCHIVE_DIR)
+
+def archive_weekly_report(db: Session, student_id: str):
+    # Check for existing tip
+    tip_entry = db.query(models.StudentTip).filter(
+        models.StudentTip.student_id == student_id
+    ).order_by(models.StudentTip.time.desc()).first()
+
+    if not tip_entry or not tip_entry.tip:
+        return
+
+    # Check if it's from current week
+    today = datetime.now()
+    start_of_week = today - timedelta(days=today.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    if tip_entry.time >= start_of_week:
+        return # It is from this week, do nothing
+
+    # It is from a previous week, archive it
+    try:
+        report_data = json.loads(tip_entry.tip)
+        
+        # Generate PDF
+        pdf_filename = f"{student_id}_{tip_entry.time.strftime('%Y%m%d')}.pdf"
+        pdf_path = os.path.join(ARCHIVE_DIR, pdf_filename)
+        
+        c = canvas.Canvas(pdf_path, pagesize=A4)
+        width, height = A4
+        y = height - 50
+        
+        # Try to register a Chinese font (Windows usually has SimHei)
+        try:
+            # Common path for Windows fonts
+            font_path = "C:\\Windows\\Fonts\\simhei.ttf"
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('SimHei', font_path))
+                c.setFont("SimHei", 12)
+            else:
+                c.setFont("Helvetica", 12)
+        except:
+            c.setFont("Helvetica", 12)
+
+        c.drawString(50, y, f"Weekly Report for {student_id} - {tip_entry.time.strftime('%Y-%m-%d')}")
+        y -= 30
+        
+        for subject, content in report_data.items():
+            if y < 50:
+                c.showPage()
+                y = height - 50
+                try:
+                    c.setFont("SimHei", 12)
+                except:
+                    c.setFont("Helvetica", 12)
+            
+            c.drawString(50, y, f"Subject: {subject}")
+            y -= 20
+            
+            # Split content by lines
+            lines = content.split('\n')
+            for line in lines:
+                if y < 50:
+                    c.showPage()
+                    y = height - 50
+                    try:
+                        c.setFont("SimHei", 10)
+                    except:
+                        c.setFont("Helvetica", 10)
+                
+                # Simple wrapping (very basic)
+                c.drawString(50, y, line[:80]) 
+                y -= 12
+            y -= 20
+            
+        c.save()
+        
+        # Clear the tip
+        tip_entry.tip = None
+        db.commit()
+        
+    except Exception as e:
+        print(f"Error archiving report: {e}")
+
 
 router = APIRouter()
 
@@ -138,6 +231,9 @@ async def login_for_access_token(
             )
         try:
             if auth_utils.verify_password(password, student.password):
+                # Check for weekly report archiving
+                archive_weekly_report(db, student.student_id)
+
                 access_token_expires = timedelta(minutes=config.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
                 access_token = auth_utils.create_access_token(
                     data={"sub": student.student_id, "user_type": "student"}, 
@@ -266,6 +362,9 @@ async def login_for_access_token(
         if student:
             try:
                 if auth_utils.verify_password(password, student.password):
+                    # Check for weekly report archiving
+                    archive_weekly_report(db, student.student_id)
+
                     access_token_expires = timedelta(minutes=config.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
                     access_token = auth_utils.create_access_token(
                         data={"sub": student.student_id, "user_type": "student"}, 

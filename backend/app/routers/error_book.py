@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Body, Depends, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Body, Depends, Form, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional, List
@@ -24,6 +24,58 @@ def get_knowledge_tags():
         with open(cache_file, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
+
+@router.get("/filters")
+def get_mistake_filters(
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    """Get filter options based on student's existing mistakes"""
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can access their filters")
+    
+    user = current_user_data["user"]
+    
+    # Fetch all mistakes for the student to extract tags
+    # We only need subject, chapter, knowledge_point columns
+    mistakes = db.query(
+        models.LearningMistake.subject,
+        models.LearningMistake.chapter,
+        models.LearningMistake.knowledge_point
+    ).filter(
+        models.LearningMistake.student_id == user.student_id
+    ).all()
+    
+    filters = []
+    for m in mistakes:
+        # Parse knowledge points
+        kps = []
+        if m.knowledge_point:
+            try:
+                parsed = json.loads(m.knowledge_point)
+                if isinstance(parsed, list):
+                    kps = parsed
+                else:
+                    kps = [str(parsed)]
+            except:
+                kps = [kp.strip() for kp in m.knowledge_point.split(',') if kp.strip()]
+        
+        # If no KPs, still add the subject/chapter structure
+        if not kps:
+            filters.append({
+                "subject": m.subject,
+                "chapter": m.chapter,
+                "knowledge_point": None
+            })
+        else:
+            for kp in kps:
+                filters.append({
+                    "subject": m.subject,
+                    "chapter": m.chapter,
+                    "knowledge_point": kp
+                })
+                
+    return filters
 
 @router.post("/mistakes")
 async def create_mistake(
@@ -65,6 +117,9 @@ async def create_mistake(
     except ValueError:
         mistake_date = datetime.now()
 
+    # Generate Tip using LLM
+    tip = await llm_service.generate_mistake_tip(content, subject)
+
     # Create DB entry
     # Note: ID is auto-incremented by database
     mistake = models.LearningMistake(
@@ -75,6 +130,7 @@ async def create_mistake(
         knowledge_point=knowledge_point,
         content=content,
         note=note,
+        tip=tip,
         graph_1=graph_1_path,
         graph_2=graph_2_path
     )
@@ -108,7 +164,161 @@ async def analyze_problem(request: AnalyzeRequest):
         print(f"Error in analyze_problem: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Deprecated: Kept for reference or legacy support if needed, but new flow uses /ocr and /analyze
-# @router.post("/upload-problem")
-# async def upload_problem(file: UploadFile = File(...)):
-#     ...
+@router.get("/list")
+def get_mistakes(
+    subject: Optional[str] = None,
+    chapter: Optional[str] = None,
+    knowledge_points: Optional[str] = None, # Comma separated or JSON string
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can view their mistakes")
+    
+    user = current_user_data["user"]
+    query = db.query(models.LearningMistake).filter(models.LearningMistake.student_id == user.student_id)
+    
+    if subject:
+        query = query.filter(models.LearningMistake.subject == subject)
+    if chapter:
+        query = query.filter(models.LearningMistake.chapter == chapter)
+        
+    mistakes = query.all()
+    
+    # Filter by knowledge points in Python
+    if knowledge_points:
+        try:
+            # Try parsing as JSON first
+            kp_filter = json.loads(knowledge_points)
+            if not isinstance(kp_filter, list):
+                kp_filter = [knowledge_points]
+        except:
+            # Fallback to comma separated
+            kp_filter = [kp.strip() for kp in knowledge_points.split(',') if kp.strip()]
+            
+        if kp_filter:
+            filtered_mistakes = []
+            for m in mistakes:
+                if not m.knowledge_point:
+                    continue
+                try:
+                    # Parse stored knowledge points
+                    # It might be stored as JSON string or plain string
+                    try:
+                        m_kps = json.loads(m.knowledge_point)
+                        if not isinstance(m_kps, list):
+                            m_kps = [m.knowledge_point]
+                    except:
+                        m_kps = [kp.strip() for kp in m.knowledge_point.split(',') if kp.strip()]
+                    
+                    # Check if all filter tags are present in the mistake's tags
+                    if set(kp_filter).issubset(set(m_kps)):
+                        filtered_mistakes.append(m)
+                except Exception as e:
+                    print(f"Error parsing knowledge point for mistake {m.id}: {e}")
+                    continue
+            mistakes = filtered_mistakes
+
+    return mistakes
+
+class MistakeUpdate(BaseModel):
+    content: Optional[str] = None
+    note: Optional[str] = None
+
+@router.put("/{mistake_id}")
+def update_mistake(
+    mistake_id: int,
+    update_data: MistakeUpdate,
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can update mistakes")
+        
+    mistake = db.query(models.LearningMistake).filter(models.LearningMistake.id == mistake_id).first()
+    if not mistake:
+        raise HTTPException(status_code=404, detail="Mistake not found")
+        
+    if mistake.student_id != current_user_data["user"].student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this mistake")
+        
+    if update_data.content is not None:
+        mistake.content = update_data.content
+    if update_data.note is not None:
+        mistake.note = update_data.note
+        
+    db.commit()
+    db.refresh(mistake)
+    return mistake
+
+@router.delete("/{mistake_id}")
+def delete_mistake(
+    mistake_id: int,
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can delete mistakes")
+        
+    mistake = db.query(models.LearningMistake).filter(models.LearningMistake.id == mistake_id).first()
+    if not mistake:
+        raise HTTPException(status_code=404, detail="Mistake not found")
+        
+    if mistake.student_id != current_user_data["user"].student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this mistake")
+        
+    # Delete files
+    if mistake.graph_1 and os.path.exists(mistake.graph_1):
+        try:
+            os.remove(mistake.graph_1)
+        except:
+            pass
+    if mistake.graph_2 and os.path.exists(mistake.graph_2):
+        try:
+            os.remove(mistake.graph_2)
+        except:
+            pass
+            
+    db.delete(mistake)
+    db.commit()
+    return {"message": "Mistake deleted successfully"}
+
+class BatchDeleteRequest(BaseModel):
+    ids: List[int]
+
+@router.post("/batch-delete")
+def batch_delete_mistakes(
+    request: BatchDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can delete mistakes")
+    
+    user = current_user_data["user"]
+    
+    # Fetch mistakes to verify ownership and get file paths
+    mistakes = db.query(models.LearningMistake).filter(
+        models.LearningMistake.id.in_(request.ids),
+        models.LearningMistake.student_id == user.student_id
+    ).all()
+    
+    if not mistakes:
+        return {"message": "No matching mistakes found to delete"}
+        
+    for mistake in mistakes:
+        # Delete files
+        if mistake.graph_1 and os.path.exists(mistake.graph_1):
+            try:
+                os.remove(mistake.graph_1)
+            except:
+                pass
+        if mistake.graph_2 and os.path.exists(mistake.graph_2):
+            try:
+                os.remove(mistake.graph_2)
+            except:
+                pass
+        db.delete(mistake)
+        
+    db.commit()
+    return {"message": f"Successfully deleted {len(mistakes)} mistakes"}

@@ -1,5 +1,8 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from pathlib import Path
 from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin, syllabus
 from app.database import engine
 from app import models
@@ -36,6 +39,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount Static Files
+# Ensure uploads directory exists
+BASE_DIR = Path(__file__).resolve().parent.parent
+UPLOADS_DIR = BASE_DIR / "uploads"
+if not UPLOADS_DIR.exists():
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 # Include Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])

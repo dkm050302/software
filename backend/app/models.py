@@ -88,6 +88,7 @@ class LearningMistake(Base):
     graph_1 = Column(String, nullable=False, default="")  # 必填，存图片路径
     graph_2 = Column(String, nullable=True)   # 选填，存图片路径
     note = Column(Text, nullable=True)        # 笔记，混合文段
+    tip = Column(Text, nullable=True)         # 简短分析提示
 
     # 关系
     student = relationship("Student", back_populates="learning_mistakes")
@@ -105,6 +106,7 @@ class Note(Base):
     content = Column(Text, nullable=True)  # 内容
     chapter = Column(String, nullable=True)  # 章节
     knowledge_point = Column(String, nullable=True)  # 知识点
+    tip = Column(Text, nullable=True)         # 简短分析提示
 
     # 关系
     student = relationship("Student", back_populates="notes")
@@ -124,9 +126,23 @@ class Exercise(Base):
     graph_1 = Column(String, nullable=False)  # 必填，存图片路径
     graph_2 = Column(String, nullable=True)   # 选填，存图片路径
     note = Column(Text, nullable=True)        # 笔记，混合文段
+    tip = Column(Text, nullable=True)         # 简短分析提示
 
     # 关系
     student = relationship("Student", back_populates="exercises")
+
+
+# 学生周报表
+class StudentTip(Base):
+    __tablename__ = "student_tips"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(String, ForeignKey("students.student_id"), nullable=False)
+    tip = Column(Text, nullable=True)  # 存储JSON格式的报告字典
+    time = Column(DateTime, default=datetime.now)  # 生成时间
+
+    # 关系
+    student = relationship("Student")
 
 
 # 知识标签表（教学大纲）

@@ -60,6 +60,9 @@ def delete_teacher(teacher_id: int, db: Session = Depends(get_db), current_user_
     # 删除学生-教师关系
     db.query(models.StudentTeacher).filter(models.StudentTeacher.teacher_id == teacher_id).delete()
     
+    # 删除知识标签
+    db.query(models.KnowledgeTag).filter(models.KnowledgeTag.teacher_id == teacher_id).delete()
+    
     # 删除教师
     db.delete(teacher)
     db.commit()

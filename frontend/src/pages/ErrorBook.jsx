@@ -20,6 +20,8 @@ export default function ErrorBook() {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedChapter, setSelectedChapter] = useState('');
   const [selectedKnowledgePoints, setSelectedKnowledgePoints] = useState([]);
+  const [customKnowledgePoint, setCustomKnowledgePoint] = useState('');
+  const [isOtherSelected, setIsOtherSelected] = useState(false);
   
   // File State
   const [file, setFile] = useState(null); // graph_1 (Mistake Image)
@@ -71,25 +73,36 @@ export default function ErrorBook() {
   
   const availableChapters = React.useMemo(() => {
     if (!selectedSubject || !studentInfo) return [];
-    // Find teacher for subject
-    const teacher = studentInfo.teachers.find(t => t.subject === selectedSubject);
-    if (!teacher) return [];
     
-    // Filter tags by teacher and subject
-    const tags = knowledgeTags.filter(t => t.teacher_id === teacher.id && t.subject === selectedSubject);
+    // Find ALL teachers for the selected subject
+    // This handles cases where a student might have multiple teachers for a subject
+    const matchingTeachers = studentInfo.teachers.filter(t => t.subject === selectedSubject);
+    if (matchingTeachers.length === 0) return [];
+    
+    const teacherIds = matchingTeachers.map(t => Number(t.id));
+    
+    // Filter tags by teacher IDs and subject
+    const tags = knowledgeTags.filter(t => 
+      t.subject === selectedSubject && 
+      teacherIds.includes(Number(t.teacher_id))
+    );
+    
     // Extract unique chapters
     return [...new Set(tags.map(t => t.chapter).filter(Boolean))];
   }, [selectedSubject, studentInfo, knowledgeTags]);
 
   const availableKnowledgePoints = React.useMemo(() => {
     if (!selectedSubject || !selectedChapter || !studentInfo) return [];
-    const teacher = studentInfo.teachers.find(t => t.subject === selectedSubject);
-    if (!teacher) return [];
+    
+    const matchingTeachers = studentInfo.teachers.filter(t => t.subject === selectedSubject);
+    if (matchingTeachers.length === 0) return [];
+    
+    const teacherIds = matchingTeachers.map(t => Number(t.id));
     
     const tags = knowledgeTags.filter(t => 
-      t.teacher_id === teacher.id && 
       t.subject === selectedSubject && 
-      t.chapter === selectedChapter
+      t.chapter === selectedChapter &&
+      teacherIds.includes(Number(t.teacher_id))
     );
     return [...new Set(tags.map(t => t.knowledge_point).filter(Boolean))];
   }, [selectedSubject, selectedChapter, studentInfo, knowledgeTags]);
@@ -99,21 +112,33 @@ export default function ErrorBook() {
     setSelectedSubject(e.target.value);
     setSelectedChapter('');
     setSelectedKnowledgePoints([]);
+    setIsOtherSelected(false);
+    setCustomKnowledgePoint('');
   };
 
   const handleChapterChange = (e) => {
     setSelectedChapter(e.target.value);
     setSelectedKnowledgePoints([]);
+    setIsOtherSelected(false);
+    setCustomKnowledgePoint('');
   };
 
   const handleKnowledgePointChange = (event) => {
     const {
       target: { value },
     } = event;
-    setSelectedKnowledgePoints(
-      // On autofill we get a stringified value.
-      typeof value === 'string' ? value.split(',') : value,
-    );
+    
+    const selectedValues = typeof value === 'string' ? value.split(',') : value;
+    
+    // Check if "Other" is selected
+    const otherIndex = selectedValues.indexOf('__OTHER__');
+    const hasOther = otherIndex !== -1;
+    
+    setIsOtherSelected(hasOther);
+    
+    // Filter out __OTHER__ from the main selection list to keep it clean, 
+    // or keep it to show the chip. Let's keep it but handle display.
+    setSelectedKnowledgePoints(selectedValues);
   };
 
   const performOCR = async (selectedFile) => {
@@ -176,7 +201,14 @@ export default function ErrorBook() {
     const formData = new FormData();
     formData.append('subject', selectedSubject);
     formData.append('chapter', selectedChapter);
-    formData.append('knowledge_point', JSON.stringify(selectedKnowledgePoints));
+    
+    // Combine standard points and custom point
+    let finalKnowledgePoints = selectedKnowledgePoints.filter(kp => kp !== '__OTHER__');
+    if (isOtherSelected && customKnowledgePoint.trim()) {
+      finalKnowledgePoints.push(customKnowledgePoint.trim());
+    }
+    
+    formData.append('knowledge_point', JSON.stringify(finalKnowledgePoints));
     formData.append('content', ocrText);
     formData.append('note', editableAnalysis);
     formData.append('date', new Date().toISOString());
@@ -199,14 +231,14 @@ export default function ErrorBook() {
     }
   };
 
-  const insertText = (before, after = '') => {
-    const textarea = document.getElementById('analysis-editor');
+  const insertText = (elementId, value, setValue, before, after = '') => {
+    const textarea = document.getElementById(elementId);
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const text = editableAnalysis;
+    const text = value;
     const newText = text.substring(0, start) + before + text.substring(start, end) + after + text.substring(end);
-    setEditableAnalysis(newText);
+    setValue(newText);
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
@@ -265,17 +297,32 @@ export default function ErrorBook() {
                     input={<OutlinedInput label="知识点 (Knowledge Points)" />}
                     renderValue={(selected) => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => (
-                          <Chip key={value} label={value} />
-                        ))}
+                        {selected.map((value) => {
+                          if (value === '__OTHER__') return <Chip key={value} label="其他 (Other)" color="primary" variant="outlined" />;
+                          return <Chip key={value} label={value} />;
+                        })}
                       </Box>
                     )}
                   >
                     {availableKnowledgePoints.map((kp) => (
                       <MenuItem key={kp} value={kp}>{kp}</MenuItem>
                     ))}
+                    <MenuItem value="__OTHER__" sx={{ fontStyle: 'italic', color: 'primary.main' }}>
+                      + 其他 (Other)
+                    </MenuItem>
                   </Select>
                 </FormControl>
+                {isOtherSelected && (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="请输入自定义知识点"
+                    value={customKnowledgePoint}
+                    onChange={(e) => setCustomKnowledgePoint(e.target.value)}
+                    sx={{ mt: 2 }}
+                    placeholder="例如：自定义考点A"
+                  />
+                )}
               </Grid>
             </Grid>
 
@@ -356,21 +403,40 @@ export default function ErrorBook() {
           </Paper>
 
           <Paper elevation={3} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>2. 识别结果 (OCR)</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">2. 识别结果 (OCR)</Typography>
+              <ButtonGroup size="small">
+                <Tooltip title="Bold"><IconButton onClick={() => insertText('ocr-editor', ocrText, setOcrText, '**', '**')}><FormatBold /></IconButton></Tooltip>
+                <Tooltip title="Italic"><IconButton onClick={() => insertText('ocr-editor', ocrText, setOcrText, '*', '*')}><FormatItalic /></IconButton></Tooltip>
+                <Tooltip title="Heading"><IconButton onClick={() => insertText('ocr-editor', ocrText, setOcrText, '### ')}><FormatSize /></IconButton></Tooltip>
+                <Tooltip title="Inline Math"><IconButton onClick={() => insertText('ocr-editor', ocrText, setOcrText, '$', '$')}><Code /></IconButton></Tooltip>
+                <Tooltip title="Block Math"><IconButton onClick={() => insertText('ocr-editor', ocrText, setOcrText, '$$', '$$')}><Code /></IconButton></Tooltip>
+              </ButtonGroup>
+            </Box>
             {ocrLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                 <CircularProgress />
               </Box>
             ) : (
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                value={ocrText}
-                onChange={(e) => setOcrText(e.target.value)}
-                placeholder="OCR识别的文本将显示在这里..."
-                variant="outlined"
-              />
+              <>
+                <TextField
+                  id="ocr-editor"
+                  fullWidth
+                  multiline
+                  rows={6}
+                  value={ocrText}
+                  onChange={(e) => setOcrText(e.target.value)}
+                  placeholder="OCR识别的文本将显示在这里..."
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                />
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>预览:</Typography>
+                <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100, maxHeight: 300, overflow: 'auto' }}>
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    {ocrText || '(预览区域)'}
+                  </ReactMarkdown>
+                </Box>
+              </>
             )}
             <Button
               variant="contained"
@@ -390,11 +456,11 @@ export default function ErrorBook() {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">3. 智能解析 (Note)</Typography>
               <ButtonGroup size="small">
-                <Tooltip title="Bold"><IconButton onClick={() => insertText('**', '**')}><FormatBold /></IconButton></Tooltip>
-                <Tooltip title="Italic"><IconButton onClick={() => insertText('*', '*')}><FormatItalic /></IconButton></Tooltip>
-                <Tooltip title="Heading"><IconButton onClick={() => insertText('### ')}><FormatSize /></IconButton></Tooltip>
-                <Tooltip title="Inline Math"><IconButton onClick={() => insertText('$', '$')}><Code /></IconButton></Tooltip>
-                <Tooltip title="Block Math"><IconButton onClick={() => insertText('$$', '$$')}><Code /></IconButton></Tooltip>
+                <Tooltip title="Bold"><IconButton onClick={() => insertText('analysis-editor', editableAnalysis, setEditableAnalysis, '**', '**')}><FormatBold /></IconButton></Tooltip>
+                <Tooltip title="Italic"><IconButton onClick={() => insertText('analysis-editor', editableAnalysis, setEditableAnalysis, '*', '*')}><FormatItalic /></IconButton></Tooltip>
+                <Tooltip title="Heading"><IconButton onClick={() => insertText('analysis-editor', editableAnalysis, setEditableAnalysis, '### ')}><FormatSize /></IconButton></Tooltip>
+                <Tooltip title="Inline Math"><IconButton onClick={() => insertText('analysis-editor', editableAnalysis, setEditableAnalysis, '$', '$')}><Code /></IconButton></Tooltip>
+                <Tooltip title="Block Math"><IconButton onClick={() => insertText('analysis-editor', editableAnalysis, setEditableAnalysis, '$$', '$$')}><Code /></IconButton></Tooltip>
               </ButtonGroup>
             </Box>
             

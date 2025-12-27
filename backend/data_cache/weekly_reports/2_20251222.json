@@ -1,0 +1,56 @@
+{
+  "General": {
+    "mistakes": [
+      {
+        "content": "(2) Cylindrically symmetric charges 柱对称\r\n\r\nAn infinite long cylindrical thin rod with a uniform linear charge density $\\lambda$.\r\n\r\n$$\r\n\\int_{\\text{cylinder}} \\mathbf{E} \\cdot d\\mathbf{A} = E \\int_{\\text{cylinder}} dA = E(2\\pi r h) = \\frac{\\lambda h}{\\varepsilon_0}\r\n$$\r\n\r\n$$\r\nE = \\frac{\\lambda}{2\\pi\\varepsilon_0 r}\r\n$$\r\n\r\nAn infinite long cylinder of radius R with a uniform charge distribution. The linear charge density is $\\lambda$.\r\n\r\n$$\r\nE = \\frac{\\lambda r}{2\\pi\\varepsilon_0 R^2} \\quad (r < R)\r\n$$",
+        "knowledge_point": "[\"积分方程\",\"积分变换\"]",
+        "tip": "这是一道题目分析：等比数列。 难度：8/10"
+      },
+      {
+        "content": "Find $\\lim_{x \\to 0} \\frac{\\int_0^x \\left[ \\int_0^{u^2} \\arctan(1+t) dt \\right] du}{x(1 - \\cos x)}$ $\\left(\\frac{0}{0}\\right)$\r\n\r\nThe original limit $= 2\\lim_{x \\to 0} \\frac{\\int_0^x \\left[ \\int_0^{u^2} \\arctan(1+t) dt \\right] du}{x^3}$\r\n\r\n$= 2\\lim_{x \\to 0} \\frac{\\int_0^{x^2} \\arctan(1+t) dt}{3x^2}$ $\\left(\\frac{0}{0}\\right)$\r\n\r\n$= \\frac{2}{3} \\lim_{x \\to 0} \\frac{\\arctan(1+x^2) \\cdot 2x}{2x}$\r\n\r\n$= \\frac{2}{3} \\cdot \\frac{\\pi}{4} = \\frac{\\pi}{6}$.\r\n\r\n$1 - \\cos x \\sim \\frac{x^2}{2}$ $(x \\to 0)$",
+        "knowledge_point": "[\"三角函数\",\"积分变换\"]",
+        "tip": "这是一道题目分析：三角积分。 难度：6/10"
+      },
+      {
+        "content": "4. Calculating potential by superposition principle\r\n\r\nLearning objectives:\r\n- For charge that is distributed uniformly along a line or over a surface, find the potential by integration. Find the potential for an electric dipole.\r\n\r\nContinuous distribution of charges  \r\n(有限尺寸的连续带电体)\r\n\r\nPotential at P due to differential element of charge $dq$ is  \r\n$$\r\ndV = \\frac{dq}{4\\pi\\varepsilon_0 r}, \\quad V(\\infty) = 0\r\n$$\r\n\r\nPotential at P due to the continuous distribution of charges is  \r\n$$\r\nV = \\int dV = \\int \\frac{1}{4\\pi\\varepsilon_0} \\frac{dq}{r}\r\n$$",
+        "knowledge_point": "[\"aaa\"]",
+        "tip": "这是一道题目分析：积分变换。 难度：6/10"
+      },
+      {
+        "content": "Example 4: A water molecule has an electric dipole of $6.2 \\times 10^{-30} \\, \\text{C} \\cdot \\text{m}$.\r\n\r\n(a) How far apart are the molecule's centers of positive and negative charges?\r\n\r\nSolution: $\\text{H}_2\\text{O}$ has 10 protons, so $q = 10e$.\r\n\r\n$$\r\nd = \\frac{p}{q} = \\frac{6.2 \\times 10^{-30} \\, \\text{C} \\cdot \\text{m}}{10 \\times 1.6 \\times 10^{-19} \\, \\text{C}} = 3.9 \\times 10^{-12} \\, \\text{m}\r\n$$\r\n\r\n(b) If $\\text{H}_2\\text{O}$ molecule is placed in an external field of $1.5 \\times 10^4 \\, \\text{N/C}$. What maximum torque can the field exert on it?\r\n\r\n$$\r\n\\tau_{\\text{max}} = pE = (6.2 \\times 10^{-30} \\, \\text{C} \\cdot \\text{m})(1.5 \\times 10^4 \\, \\text{N/C}) = 9.3 \\times 10^{-26} \\, \\text{N} \\cdot \\text{m}\r\n$$\r\n\r\n(c) How much work must an external agent do to rotate a water molecule from $\\theta = 0^\\circ$ to $\\theta = 180^\\circ$?\r\n\r\n$$\r\nW = 2pE = 1.9 \\times 10^{-25} \\, \\text{J}\r\n$$",
+        "knowledge_point": "[\"alpha分布\"]",
+        "tip": "这是一道题目分析：电偶极矩、电场中力矩与功。难度：5/10"
+      }
+    ],
+    "notes": []
+  },
+  "Math": {
+    "mistakes": [],
+    "notes": []
+  },
+  "数学": {
+    "mistakes": [
+      {
+        "content": "(2) Cylindrically symmetric charges 柱对称\r\n\r\nAn infinite long cylindrical thin rod with a uniform linear charge density $\\lambda$.\r\n\r\n$$\r\n\\int_{\\text{cylinder}} \\mathbf{E} \\cdot d\\mathbf{A} = E \\int_{\\text{cylinder}} dA = E(2\\pi r h) = \\frac{\\lambda h}{\\varepsilon_0}\r\n$$\r\n\r\n$$\r\nE = \\frac{\\lambda}{2\\pi\\varepsilon_0 r}\r\n$$\r\n\r\nAn infinite long cylinder of radius R with a uniform charge distribution. The linear charge density is $\\lambda$.\r\n\r\n$$\r\nE = \\frac{\\lambda r}{2\\pi\\varepsilon_0 R^2} \\quad (r < R)\r\n$$",
+        "knowledge_point": "[\"积分方程\",\"积分变换\"]",
+        "tip": "这是一道题目分析：等比数列。 难度：8/10"
+      },
+      {
+        "content": "Find $\\lim_{x \\to 0} \\frac{\\int_0^x \\left[ \\int_0^{u^2} \\arctan(1+t) dt \\right] du}{x(1 - \\cos x)}$ $\\left(\\frac{0}{0}\\right)$\r\n\r\nThe original limit $= 2\\lim_{x \\to 0} \\frac{\\int_0^x \\left[ \\int_0^{u^2} \\arctan(1+t) dt \\right] du}{x^3}$\r\n\r\n$= 2\\lim_{x \\to 0} \\frac{\\int_0^{x^2} \\arctan(1+t) dt}{3x^2}$ $\\left(\\frac{0}{0}\\right)$\r\n\r\n$= \\frac{2}{3} \\lim_{x \\to 0} \\frac{\\arctan(1+x^2) \\cdot 2x}{2x}$\r\n\r\n$= \\frac{2}{3} \\cdot \\frac{\\pi}{4} = \\frac{\\pi}{6}$.\r\n\r\n$1 - \\cos x \\sim \\frac{x^2}{2}$ $(x \\to 0)$",
+        "knowledge_point": "[\"三角函数\",\"积分变换\"]",
+        "tip": "这是一道题目分析：三角积分。 难度：6/10"
+      },
+      {
+        "content": "4. Calculating potential by superposition principle\r\n\r\nLearning objectives:\r\n- For charge that is distributed uniformly along a line or over a surface, find the potential by integration. Find the potential for an electric dipole.\r\n\r\nContinuous distribution of charges  \r\n(有限尺寸的连续带电体)\r\n\r\nPotential at P due to differential element of charge $dq$ is  \r\n$$\r\ndV = \\frac{dq}{4\\pi\\varepsilon_0 r}, \\quad V(\\infty) = 0\r\n$$\r\n\r\nPotential at P due to the continuous distribution of charges is  \r\n$$\r\nV = \\int dV = \\int \\frac{1}{4\\pi\\varepsilon_0} \\frac{dq}{r}\r\n$$",
+        "knowledge_point": "[\"aaa\"]",
+        "tip": "这是一道题目分析：积分变换。 难度：6/10"
+      },
+      {
+        "content": "Example 4: A water molecule has an electric dipole of $6.2 \\times 10^{-30} \\, \\text{C} \\cdot \\text{m}$.\r\n\r\n(a) How far apart are the molecule's centers of positive and negative charges?\r\n\r\nSolution: $\\text{H}_2\\text{O}$ has 10 protons, so $q = 10e$.\r\n\r\n$$\r\nd = \\frac{p}{q} = \\frac{6.2 \\times 10^{-30} \\, \\text{C} \\cdot \\text{m}}{10 \\times 1.6 \\times 10^{-19} \\, \\text{C}} = 3.9 \\times 10^{-12} \\, \\text{m}\r\n$$\r\n\r\n(b) If $\\text{H}_2\\text{O}$ molecule is placed in an external field of $1.5 \\times 10^4 \\, \\text{N/C}$. What maximum torque can the field exert on it?\r\n\r\n$$\r\n\\tau_{\\text{max}} = pE = (6.2 \\times 10^{-30} \\, \\text{C} \\cdot \\text{m})(1.5 \\times 10^4 \\, \\text{N/C}) = 9.3 \\times 10^{-26} \\, \\text{N} \\cdot \\text{m}\r\n$$\r\n\r\n(c) How much work must an external agent do to rotate a water molecule from $\\theta = 0^\\circ$ to $\\theta = 180^\\circ$?\r\n\r\n$$\r\nW = 2pE = 1.9 \\times 10^{-25} \\, \\text{J}\r\n$$",
+        "knowledge_point": "[\"alpha分布\"]",
+        "tip": "这是一道题目分析：电偶极矩、电场中力矩与功。难度：5/10"
+      }
+    ],
+    "notes": []
+  }
+}

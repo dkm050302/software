@@ -10,3 +10,4 @@ httpx>=0.24.0
 # whisper # Uncomment if running locally, or use API
 # pytesseract # For OCR if running locally
 # pillow
+reportlab
