@@ -1,31 +1,31 @@
 [
   {
     "id": 1,
-    "subject": null,
+    "subject": "数学",
     "chapter": "第2章",
     "knowledge_point": "alpha分布"
   },
   {
     "id": 2,
-    "subject": null,
+    "subject": "数学",
     "chapter": "第2章",
     "knowledge_point": "检验"
   },
   {
     "id": 3,
-    "subject": null,
+    "subject": "数学",
     "chapter": "第3章",
     "knowledge_point": "卡方分布"
   },
   {
     "id": 4,
-    "subject": null,
+    "subject": "数学",
     "chapter": "第1章",
     "knowledge_point": "方差"
   },
   {
     "id": 5,
-    "subject": null,
+    "subject": "数学",
     "chapter": "第1章",
     "knowledge_point": "等比数列"
   }
