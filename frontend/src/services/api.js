@@ -8,10 +8,80 @@ const api = axios.create({
   },
 });
 
-// Add a request interceptor to include the auth token
+// 检查token是否即将过期（在5分钟内过期）
+const isTokenExpiringSoon = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000; // 转换为毫秒
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    return exp - now < fiveMinutes;
+  } catch (e) {
+    return false;
+  }
+};
+
+// 刷新token（使用原始axios实例避免循环调用）
+let isRefreshing = false;
+let refreshPromise = null;
+
+const refreshToken = async () => {
+  // 如果正在刷新，返回同一个promise
+  if (isRefreshing) {
+    return refreshPromise;
+  }
+  
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const currentToken = sessionStorage.getItem("token");
+      if (!currentToken) {
+        throw new Error("No token to refresh");
+      }
+      
+      // 使用原始axios实例，避免拦截器循环
+      const axiosInstance = axios.create({
+        baseURL: '/api',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentToken}`
+        }
+      });
+      
+      const response = await axiosInstance.post("/auth/refresh");
+      const newToken = response.data.access_token;
+      sessionStorage.setItem("token", newToken);
+      return newToken;
+    } catch (error) {
+      // 刷新失败，清除token并跳转到登录页
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("studentId");
+      window.location.href = "/login";
+      throw error;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
+};
+
+// Add a request interceptor to include the auth token and auto-refresh
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
+  async (config) => {
+    let token = sessionStorage.getItem("token");
+    
+    // 如果token存在且即将过期，尝试刷新
+    if (token && isTokenExpiringSoon(token)) {
+      try {
+        token = await refreshToken();
+      } catch (error) {
+        // 刷新失败，请求会被取消
+        return Promise.reject(error);
+      }
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -38,12 +108,25 @@ api.interceptors.response.use(
       }
     }
 
-    if (error.response && error.response.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      // Redirect to login page
-      window.location.href = '/login';
+    // 处理401错误：尝试刷新token后重试
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // 尝试刷新token
+        const newToken = await refreshToken();
+        // 使用新token重试请求
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // 刷新失败，清除token并跳转到登录页
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("studentId");
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
     }
+    
     return Promise.reject(error);
   }
 );

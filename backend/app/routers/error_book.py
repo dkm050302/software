@@ -5,6 +5,7 @@ from typing import Optional, List
 import os
 import json
 import shutil
+import re
 from datetime import datetime
 from app.services.ocr_service import ocr_service
 from app.services.llm_service import llm_service
@@ -101,15 +102,35 @@ async def create_mistake(
     # Generate unique filenames
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     
-    graph_1_path = f"{upload_dir}/{user.student_id}_{timestamp}_1_{graph_1.filename}"
-    with open(graph_1_path, "wb") as buffer:
-        shutil.copyfileobj(graph_1.file, buffer)
+    # Sanitize filename (remove path separators and other dangerous characters)
+    def sanitize_filename(filename):
+        if not filename:
+            return "image"
+        # Remove path separators and other dangerous characters
+        filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+        return filename[:100]  # Limit length
+    
+    graph_1_filename = sanitize_filename(graph_1.filename)
+    graph_1_path = f"{upload_dir}/{user.student_id}_{timestamp}_1_{graph_1_filename}"
+    
+    try:
+        with open(graph_1_path, "wb") as buffer:
+            shutil.copyfileobj(graph_1.file, buffer)
+    except Exception as e:
+        print(f"Error saving graph_1: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save image: {str(e)}")
         
     graph_2_path = None
     if graph_2:
-        graph_2_path = f"{upload_dir}/{user.student_id}_{timestamp}_2_{graph_2.filename}"
-        with open(graph_2_path, "wb") as buffer:
-            shutil.copyfileobj(graph_2.file, buffer)
+        graph_2_filename = sanitize_filename(graph_2.filename)
+        graph_2_path = f"{upload_dir}/{user.student_id}_{timestamp}_2_{graph_2_filename}"
+        try:
+            with open(graph_2_path, "wb") as buffer:
+                shutil.copyfileobj(graph_2.file, buffer)
+        except Exception as e:
+            print(f"Error saving graph_2: {e}")
+            # If graph_2 fails, we can still save the mistake with just graph_1
+            graph_2_path = None
 
     # Parse date
     try:
@@ -117,8 +138,17 @@ async def create_mistake(
     except ValueError:
         mistake_date = datetime.now()
 
-    # Generate Tip using LLM
-    tip = await llm_service.generate_mistake_tip(content, subject)
+    # Generate Tip using LLM (with error handling)
+    tip = None
+    try:
+        tip = await llm_service.generate_mistake_tip(content, subject)
+    except Exception as e:
+        import traceback
+        error_msg = f"Error generating tip for mistake (student_id: {user.student_id}, subject: {subject}): {str(e)}"
+        print(error_msg)
+        print(f"Traceback: {traceback.format_exc()}")
+        # 如果LLM服务失败，使用默认tip，不影响错题保存
+        tip = f"这是一道{subject}题目分析：无法生成分析结果。难度：?/10"
 
     # Create DB entry
     # Note: ID is auto-incremented by database
@@ -135,9 +165,22 @@ async def create_mistake(
         graph_2=graph_2_path
     )
     
-    db.add(mistake)
-    db.commit()
-    db.refresh(mistake)
+    try:
+        db.add(mistake)
+        db.commit()
+        db.refresh(mistake)
+    except Exception as e:
+        db.rollback()
+        # 如果数据库操作失败，尝试删除已保存的图片
+        try:
+            if os.path.exists(graph_1_path):
+                os.remove(graph_1_path)
+            if graph_2_path and os.path.exists(graph_2_path):
+                os.remove(graph_2_path)
+        except:
+            pass
+        print(f"Error saving mistake to database: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save mistake: {str(e)}")
     
     return {"message": "Mistake created successfully", "id": mistake.id}
 

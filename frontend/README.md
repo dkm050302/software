@@ -4,6 +4,8 @@ This is the React frontend for the AI Tutor application.
 
 ## Setup
 
+cd frontend
+
 1.  **Install Dependencies**:
     Open a terminal in this `frontend` folder and run:
     `ash

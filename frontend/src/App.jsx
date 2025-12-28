@@ -9,15 +9,30 @@ import ViewErrorBook from "./pages/ViewErrorBook";
 import ParentView from "./pages/ParentView";
 import Admin from "./pages/Admin";
 import Syllabus from "./pages/Syllabus";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+
+// 检查token是否有效（未过期）
+const isTokenValid = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000; // 转换为毫秒
+    return Date.now() < exp;
+  } catch (e) {
+    return false;
+  }
+};
 /* frontend/src/App.jsx */
-import NoteManager from './pages/NoteManager';   // ← 新增1：引入页面
+import NoteManager from "./pages/NoteManager"; // ← 新增1：引入页面
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  if (!token) {
+  const token = sessionStorage.getItem("token");
+  if (!token || !isTokenValid(token)) {
+    // Token不存在或已过期，清除并跳转到登录页
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("studentId");
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -26,7 +41,7 @@ const ProtectedRoute = ({ children }) => {
 // 从token中获取用户类型
 const getUserTypeFromToken = () => {
   try {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return null;
     const payload = JSON.parse(atob(token.split(".")[1]));
     return payload.user_type;
@@ -46,8 +61,10 @@ const DashboardRoute = () => {
 
 // Admin Route Wrapper - 只有管理员才能访问
 const AdminRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  if (!token) {
+  const token = sessionStorage.getItem("token");
+  if (!token || !isTokenValid(token)) {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("studentId");
     return <Navigate to="/login" replace />;
   }
   const userType = getUserTypeFromToken();
@@ -59,8 +76,10 @@ const AdminRoute = ({ children }) => {
 
 // Teacher Route Wrapper - 只有教师才能访问
 const TeacherRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  if (!token) {
+  const token = sessionStorage.getItem("token");
+  if (!token || !isTokenValid(token)) {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("studentId");
     return <Navigate to="/login" replace />;
   }
   const userType = getUserTypeFromToken();
@@ -74,9 +93,8 @@ function App() {
   return (
     <Routes>
       {/* 公共页面 */}
-      <Route path="/login"    element={<Login />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
       {/* 受保护的主布局 */}
       <Route
         path="/"
@@ -87,13 +105,13 @@ function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="notes"        element={<NoteAssistant />} />
-        <Route path="maps"         element={<MapGeneration />} />
-        <Route path="errors"       element={<ErrorBook />} />
+        <Route path="notes" element={<NoteAssistant />} />
+        <Route path="maps" element={<MapGeneration />} />
+        <Route path="errors" element={<ErrorBook />} />
         <Route path="errors/create" element={<ViewErrorBook />} />
-        <Route path="errors/view"   element={<ViewErrorBook />} />
+        <Route path="errors/view" element={<ViewErrorBook />} />
         <Route path="notes-manager" element={<NoteManager />} />
-        <Route path="parents"       element={<ParentView />} />
+        <Route path="parents" element={<ParentView />} />
         <Route
           path="syllabus"
           element={
@@ -110,7 +128,9 @@ function App() {
             </AdminRoute>
           }
         />
-      </Route>   {/* 这里是真正的闭合 */}
+        <Route path="profile" element={<Profile />} />
+      </Route>{" "}
+      {/* 这里是真正的闭合 */}
     </Routes>
   );
 }

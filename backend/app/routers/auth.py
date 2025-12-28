@@ -131,7 +131,8 @@ def register_teacher(teacher: schemas.TeacherCreate, db: Session = Depends(get_d
     db_teacher = models.Teacher(
         email=teacher.email,
         password=hashed_password,
-        class_name=teacher.class_name
+        class_name=teacher.class_name,
+        subject=teacher.subject
     )
     db.add(db_teacher)
     db.flush()  # 获取teacher.id
@@ -453,5 +454,174 @@ def get_student_info(
         "teacher_ids": teacher_ids,
         "parent_ids": parent_ids,
         "teachers": teachers
-    } 
+    }
+
+# ========== 个人信息接口 ==========
+
+@router.get("/profile", response_model=dict)
+def get_profile(
+    current_user_data: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取当前用户个人信息"""
+    user = current_user_data["user"]
+    user_type = current_user_data["user_type"]
+    
+    if user_type == "student":
+        return {
+            "user_type": "student",
+            "student_id": user.student_id,
+            "name": user.name,
+            "class_name": user.class_name,
+        }
+    elif user_type == "teacher":
+        return {
+            "user_type": "teacher",
+            "id": user.id,
+            "email": user.email,
+            "subject": user.subject,
+            "class_name": user.class_name,
+        }
+    elif user_type == "parent":
+        return {
+            "user_type": "parent",
+            "id": user.id,
+            "phone": user.phone,
+        }
+    elif user_type == "admin":
+        return {
+            "user_type": "admin",
+            "id": user.id,
+            "username": user.username,
+            "name": user.name,
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Unknown user type")
+
+@router.put("/profile", response_model=dict)
+def update_profile(
+    update_data: dict,
+    current_user_data: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """更新当前用户个人信息"""
+    user = current_user_data["user"]
+    user_type = current_user_data["user_type"]
+    
+    if user_type == "student":
+        if "name" in update_data and update_data["name"] is not None:
+            user.name = update_data["name"]
+        if "class_name" in update_data:
+            user.class_name = update_data["class_name"]
+        db.commit()
+        db.refresh(user)
+        return {
+            "user_type": "student",
+            "student_id": user.student_id,
+            "name": user.name,
+            "class_name": user.class_name,
+        }
+    elif user_type == "teacher":
+        if "email" in update_data and update_data["email"] is not None:
+            # 检查邮箱是否已被其他用户使用
+            existing = db.query(models.Teacher).filter(
+                models.Teacher.email == update_data["email"],
+                models.Teacher.id != user.id
+            ).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Email already in use")
+            user.email = update_data["email"]
+        if "subject" in update_data:
+            user.subject = update_data["subject"]
+        if "class_name" in update_data:
+            user.class_name = update_data["class_name"]
+        db.commit()
+        db.refresh(user)
+        return {
+            "user_type": "teacher",
+            "id": user.id,
+            "email": user.email,
+            "subject": user.subject,
+            "class_name": user.class_name,
+        }
+    elif user_type == "parent":
+        if "phone" in update_data and update_data["phone"] is not None:
+            # 检查电话是否已被其他用户使用
+            existing = db.query(models.Parent).filter(
+                models.Parent.phone == update_data["phone"],
+                models.Parent.id != user.id
+            ).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Phone already in use")
+            user.phone = update_data["phone"]
+        db.commit()
+        db.refresh(user)
+        return {
+            "user_type": "parent",
+            "id": user.id,
+            "phone": user.phone,
+        }
+    elif user_type == "admin":
+        if "username" in update_data and update_data["username"] is not None:
+            # 检查用户名是否已被其他用户使用
+            existing = db.query(models.Admin).filter(
+                models.Admin.username == update_data["username"],
+                models.Admin.id != user.id
+            ).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Username already in use")
+            user.username = update_data["username"]
+        if "name" in update_data:
+            user.name = update_data["name"]
+        db.commit()
+        db.refresh(user)
+        return {
+            "user_type": "admin",
+            "id": user.id,
+            "username": user.username,
+            "name": user.name,
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Unknown user type")
+
+# ========== 刷新Token接口 ==========
+
+@router.post("/refresh", response_model=schemas.Token)
+def refresh_token(
+    current_user_data: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """刷新访问token，使用当前有效的token获取新的token"""
+    user = current_user_data["user"]
+    user_type = current_user_data["user_type"]
+    
+    # 根据用户类型创建新的token
+    if user_type == "student":
+        access_token_expires = timedelta(minutes=config.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = auth_utils.create_access_token(
+            data={"sub": user.student_id, "user_type": "student"},
+            expires_delta=access_token_expires
+        )
+    elif user_type == "teacher":
+        access_token_expires = timedelta(minutes=config.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = auth_utils.create_access_token(
+            data={"sub": str(user.id), "user_type": "teacher"},
+            expires_delta=access_token_expires
+        )
+    elif user_type == "parent":
+        access_token_expires = timedelta(minutes=config.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = auth_utils.create_access_token(
+            data={"sub": str(user.id), "user_type": "parent"},
+            expires_delta=access_token_expires
+        )
+    elif user_type == "admin":
+        access_token_expires = timedelta(minutes=config.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = auth_utils.create_access_token(
+            data={"sub": str(user.id), "user_type": "admin"},
+            expires_delta=access_token_expires
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Unknown user type")
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 

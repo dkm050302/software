@@ -27,6 +27,7 @@ import {
   AdminPanelSettings as AdminIcon,
   Logout as LogoutIcon,
   MenuBook as MenuBookIcon,
+  Person as PersonIcon,
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
@@ -44,16 +45,15 @@ export default function Layout() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("studentId");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("studentId");
     navigate("/login");
   };
 
-  // 从token中获取用户类型，而不是从localStorage
+  // 从token中获取用户类型
   const getUserTypeFromToken = () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (!token) return null;
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.user_type;
@@ -75,7 +75,10 @@ export default function Layout() {
   // 如果是管理员，只显示管理员界面
   let menuItems = [];
   if (isAdmin()) {
-    menuItems = [{ text: "管理员界面", icon: <AdminIcon />, path: "/admin" }];
+    menuItems = [
+      { text: "管理员界面", icon: <AdminIcon />, path: "/admin" },
+      { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
+    ];
   } else {
     // 非管理员显示常规菜单
     menuItems = [
@@ -84,11 +87,12 @@ export default function Layout() {
       { text: "Map Generation", icon: <MapIcon />, path: "/maps" },
       { text: "Error Book", icon: <ErrorIcon />, path: "/errors" },
       { text: "Parent View", icon: <FamilyIcon />, path: "/parents" },
+      { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
     ];
 
     // 只有教师才能看到教学大纲
     if (isTeacher()) {
-      menuItems.push({
+      menuItems.splice(menuItems.length - 1, 0, {
         text: "教学大纲",
         icon: <MenuBookIcon />,
         path: "/syllabus",
@@ -114,7 +118,9 @@ export default function Layout() {
             return (
               <React.Fragment key={item.text}>
                 <ListItem disablePadding>
-                  <ListItemButton onClick={() => setErrorBookOpen(!errorBookOpen)}>
+                  <ListItemButton
+                    onClick={() => setErrorBookOpen(!errorBookOpen)}
+                  >
                     <ListItemIcon>{item.icon}</ListItemIcon>
                     <ListItemText primary={item.text} />
                     {errorBookOpen ? <ExpandLess /> : <ExpandMore />}
@@ -122,17 +128,17 @@ export default function Layout() {
                 </ListItem>
                 <Collapse in={errorBookOpen} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
-                    <ListItemButton 
-                      sx={{ pl: 4 }} 
-                      selected={location.pathname === '/errors/create'} 
-                      onClick={() => navigate('/errors/create')}
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      selected={location.pathname === "/errors/create"}
+                      onClick={() => navigate("/errors/create")}
                     >
                       <ListItemText primary="Create Error Book" />
                     </ListItemButton>
-                    <ListItemButton 
-                      sx={{ pl: 4 }} 
-                      selected={location.pathname === '/errors/view'} 
-                      onClick={() => navigate('/errors/view')}
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      selected={location.pathname === "/errors/view"}
+                      onClick={() => navigate("/errors/view")}
                     >
                       <ListItemText primary="View Error Book" />
                     </ListItemButton>

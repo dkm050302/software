@@ -15,20 +15,15 @@ import api from "../services/api";
 
 export default function Register() {
   const navigate = useNavigate();
-  const [userType, setUserType] = useState("student");
+  const [userType, setUserType] = useState("parent");
   const [formData, setFormData] = useState({
-    // 学生
-    student_id: "",
-    name: "",
-    password: "",
-    class_name: "",
-    // 教师
-    email: "",
     // 家长
     phone: "",
     student_id_for_parent: "", // 家长注册时需要关联的学生学号
+    password: "",
     // 管理员
     username: "",
+    name: "",
   });
   const [error, setError] = useState("");
 
@@ -36,14 +31,11 @@ export default function Register() {
     if (newType !== null) {
       setUserType(newType);
       setFormData({
-        student_id: "",
-        name: "",
-        password: "",
-        class_name: "",
-        email: "",
         phone: "",
         student_id_for_parent: "",
+        password: "",
         username: "",
+        name: "",
       });
       setError("");
     }
@@ -57,22 +49,7 @@ export default function Register() {
       let endpoint = "";
       let data = {};
 
-      if (userType === "student") {
-        endpoint = "/auth/register/student";
-        data = {
-          student_id: formData.student_id,
-          name: formData.name,
-          password: formData.password,
-          class_name: formData.class_name,
-        };
-      } else if (userType === "teacher") {
-        endpoint = "/auth/register/teacher";
-        data = {
-          email: formData.email,
-          password: formData.password,
-          class_name: formData.class_name,
-        };
-      } else if (userType === "parent") {
+      if (userType === "parent") {
         endpoint = "/auth/register/parent";
         data = {
           phone: formData.phone,
@@ -122,12 +99,6 @@ export default function Register() {
                 onChange={handleUserTypeChange}
                 aria-label="用户类型"
               >
-                <ToggleButton value="student" aria-label="学生">
-                  学生
-                </ToggleButton>
-                <ToggleButton value="teacher" aria-label="教师">
-                  教师
-                </ToggleButton>
                 <ToggleButton value="parent" aria-label="家长">
                   家长
                 </ToggleButton>
@@ -136,82 +107,6 @@ export default function Register() {
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
-
-            {/* 学生注册表单 */}
-            {userType === "student" && (
-              <>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="student_id"
-                  label="学号 (Student ID)"
-                  name="student_id"
-                  autoComplete="username"
-                  autoFocus
-                  value={formData.student_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, student_id: e.target.value })
-                  }
-                />
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="name"
-                  label="姓名 (Name)"
-                  name="name"
-                  autoComplete="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-                <TextField
-                  margin="normal"
-                  fullWidth
-                  id="class_name"
-                  label="班级 (Class)"
-                  name="class_name"
-                  value={formData.class_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, class_name: e.target.value })
-                  }
-                />
-              </>
-            )}
-
-            {/* 教师注册表单 */}
-            {userType === "teacher" && (
-              <>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="email"
-                  label="邮箱 (Email)"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  autoFocus
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-                <TextField
-                  margin="normal"
-                  fullWidth
-                  id="class_name"
-                  label="班级 (Class) - 与学生的班级相同将自动绑定"
-                  name="class_name"
-                  value={formData.class_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, class_name: e.target.value })
-                  }
-                />
-              </>
-            )}
 
             {/* 家长注册表单 */}
             {userType === "parent" && (

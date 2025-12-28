@@ -35,6 +35,7 @@ class TeacherBase(BaseModel):
 
 class TeacherCreate(TeacherBase):
     password: str
+    subject: str  # 学科（必填）
 
 class Teacher(TeacherBase):
     id: int
@@ -71,6 +72,23 @@ class Admin(AdminBase):
     class Config:
         from_attributes = True
 
+# 更新个人信息相关Schema
+class StudentUpdate(BaseModel):
+    name: Optional[str] = None
+    class_name: Optional[str] = None
+
+class TeacherUpdate(BaseModel):
+    email: Optional[str] = None
+    subject: Optional[str] = None
+    class_name: Optional[str] = None
+
+class ParentUpdate(BaseModel):
+    phone: Optional[str] = None
+
+class AdminUpdate(BaseModel):
+    username: Optional[str] = None
+    name: Optional[str] = None
+
 # 登录相关Schema
 class LoginRequest(BaseModel):
     user_type: str  # 'student', 'teacher', 'parent', 'admin'
@@ -91,8 +109,6 @@ class StudentInfo(BaseModel):
 
     class Config:
         from_attributes = True
-    name: str
-    content: Optional[str] = None
 
 class KnowledgeTagCreate(KnowledgeTagBase):
     parent_id: Optional[int] = None

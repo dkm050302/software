@@ -43,17 +43,16 @@ export default function Login() {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
       const token = response.data.access_token;
-      localStorage.setItem("token", token);
+      sessionStorage.setItem("token", token);
 
       // 从token中解码出真实的user_type，而不是使用前端选择的userType
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
         const actualUserType = payload.user_type;
-        localStorage.setItem("userType", actualUserType);
 
-        // 如果是学生，保存学号
+        // 如果是学生，保存学号（用于某些场景）
         if (actualUserType === "student") {
-          localStorage.setItem("studentId", payload.sub);
+          sessionStorage.setItem("studentId", payload.sub);
         }
 
         // 如果是管理员，跳转到管理员页面
@@ -63,10 +62,9 @@ export default function Login() {
         }
       } catch (decodeError) {
         console.error("Error decoding token:", decodeError);
-        // 如果解码失败，使用前端选择的userType作为后备
-        localStorage.setItem("userType", userType);
+        // 如果解码失败，使用前端选择的userType作为后备判断
         if (userType === "student") {
-          localStorage.setItem("studentId", formData.username);
+          sessionStorage.setItem("studentId", formData.username);
         }
         // 如果选择的是管理员，跳转到管理员页面
         if (userType === "admin") {
