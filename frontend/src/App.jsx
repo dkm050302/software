@@ -10,6 +10,7 @@ import ParentView from "./pages/ParentView";
 import Admin from "./pages/Admin";
 import Syllabus from "./pages/Syllabus";
 import Profile from "./pages/Profile";
+import StudentStatus from "./pages/StudentStatus";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -126,6 +127,14 @@ function App() {
             <AdminRoute>
               <Admin />
             </AdminRoute>
+          }
+        />
+        <Route
+          path="student-status"
+          element={
+            <TeacherRoute>
+              <StudentStatus />
+            </TeacherRoute>
           }
         />
         <Route path="profile" element={<Profile />} />

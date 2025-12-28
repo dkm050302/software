@@ -28,6 +28,7 @@ import {
   Logout as LogoutIcon,
   MenuBook as MenuBookIcon,
   Person as PersonIcon,
+  School as SchoolIcon,
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
@@ -79,8 +80,15 @@ export default function Layout() {
       { text: "管理员界面", icon: <AdminIcon />, path: "/admin" },
       { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
     ];
+  } else if (isTeacher()) {
+    // 教师显示专用菜单
+    menuItems = [
+      { text: "学生学习情况", icon: <SchoolIcon />, path: "/student-status" },
+      { text: "教学大纲", icon: <MenuBookIcon />, path: "/syllabus" },
+      { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
+    ];
   } else {
-    // 非管理员显示常规菜单
+    // 非管理员、非教师显示常规菜单
     menuItems = [
       { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
       { text: "Note Assistant", icon: <NoteIcon />, path: "/notes" },
@@ -89,15 +97,6 @@ export default function Layout() {
       { text: "Parent View", icon: <FamilyIcon />, path: "/parents" },
       { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
     ];
-
-    // 只有教师才能看到教学大纲
-    if (isTeacher()) {
-      menuItems.splice(menuItems.length - 1, 0, {
-        text: "教学大纲",
-        icon: <MenuBookIcon />,
-        path: "/syllabus",
-      });
-    }
   }
 
   const getUserType = () => {
@@ -204,7 +203,7 @@ export default function Layout() {
           </IconButton>
           <Typography variant="h6" noWrap component="div">
             {menuItems.find((item) => item.path === location.pathname)?.text ||
-              "AI Tutor"}
+              (location.pathname === "/student-status" ? "学生学习情况" : "AI Tutor")}
           </Typography>
         </Toolbar>
       </AppBar>

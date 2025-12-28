@@ -196,3 +196,16 @@ class Admin(Base):
     username = Column(String, unique=True, index=True, nullable=False)  # 用户名
     password = Column(String, nullable=False)  # 密码
     name = Column(String, nullable=True)  # 姓名
+
+# 教师教学方案表
+class TeacherTeachingPlan(Base):
+    __tablename__ = "teacher_teaching_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False, index=True)  # 教师ID
+    student_status = Column(Text, nullable=True)  # 学生学习情况
+    teaching_plan = Column(Text, nullable=True)  # 教学方案
+    time = Column(DateTime, default=datetime.now)  # 生成时间
+
+    # 关系
+    teacher = relationship("Teacher")

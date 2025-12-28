@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from pathlib import Path
-from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin, syllabus
+from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin, syllabus, teacher
 from app.database import engine
 from app import models
 from app.routers import map_save
@@ -62,6 +62,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"]
 app.include_router(parent_view.router, prefix="/api/parents", tags=["Parent View"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(syllabus.router, prefix="/api/syllabus", tags=["Syllabus"])
+app.include_router(teacher.router, prefix="/api/teacher", tags=["Teacher"])
 
 @app.get("/")
 async def root():
