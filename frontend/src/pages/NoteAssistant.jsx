@@ -22,14 +22,9 @@ export default function NoteAssistant() {
   /* 保存按钮回调 */
   const handleSave = async () => {
     if (!result) return;
-    const payload = { ...result.structured_notes };
-    const token = localStorage.getItem('token');
     try {
-      await axios.post(
-        '/api/notes/save-file',
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // 直接沿用项目里配置好的 api 实例（已带 token 拦截器）
+      await api.post('/notes/save-file', result.structured_notes);
       alert('已保存到 data/notes/');
     } catch (e) {
       alert('保存失败：' + (e.response?.data?.detail || e.message));

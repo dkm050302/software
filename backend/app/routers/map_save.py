@@ -26,14 +26,18 @@ def _check_owner(file_name: str, user: str):
 
 @router.post("/save")
 async def save_map(req: SaveReq, user: str = Depends(get_current_user)):
-    _check_owner(req.fileName, user)
-    path = SAVE_DIR / req.fileName
+    # 自动加前缀：学号_原文件名
+    safe_name = f"{user}_{req.fileName}"
+    path = SAVE_DIR / safe_name
+
     # 防止目录穿越
     if path.resolve().parent != SAVE_DIR.resolve():
         raise HTTPException(400, detail="非法路径")
+
     with open(path, "w", encoding="utf-8") as f:
         f.write(req.svgCode)
-    return {"msg": "saved", "file": req.fileName}
+
+    return {"msg": "saved", "file": safe_name}
 
 @router.get("/list")
 async def list_maps(user: str = Depends(get_current_user)):

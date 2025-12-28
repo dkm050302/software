@@ -31,11 +31,6 @@
   "数学": {
     "mistakes": [
       {
-        "content": "The problem describes two cases of infinite cylindrical charge distributions: (1) an infinitely long thin rod with uniform linear charge density λ, and (2) an infinitely long cylinder of radius R with uniform charge distribution and linear charge density λ. The text shows derived electric field formulas using Gauss's law. For case (1): E = λ/(2πε₀r) for r > 0. For case (2): E = λr/(2πε₀R²) for r < R (inside the cylinder). The OCR text appears complete for these derivations, though it's presented as final results rather than a question to solve. No missing data is evident from the text, but typical questions might ask: 'Derive these formulas using Gauss's law' or 'Find E at points inside/outside the cylinder.'",
-        "knowledge_point": "[\"积分方程\",\"积分变换\"]",
-        "tip": "这是一道题目分析：等比数列。 难度：8/10"
-      },
-      {
         "content": "解题步骤：\n1. 利用等价无穷小替换：当x→0时，1-cos x ~ x²/2，因此分母x(1-cos x) ~ x·(x²/2) = x³/2。\n2. 将原极限转化为：2·lim_{x→0} [∫₀ˣ (∫₀^{u²} arctan(1+t) dt) du] / x³。\n3. 对分子应用洛必达法则：分子是积分上限函数∫₀ˣ f(u) du，其中f(u)=∫₀^{u²} arctan(1+t) dt。其导数为f(x)=∫₀^{x²} arctan(1+t) dt。\n4. 分母x³的导数为3x²，因此极限变为：2·lim_{x→0} [∫₀^{x²} arctan(1+t) dt] / (3x²)。\n5. 再次应用洛必达法则：分子∫₀^{x²} arctan(1+t) dt的导数为arctan(1+x²)·2x（链式法则），分母3x²的导数为6x。\n6. 化简得：(2/3)·lim_{x→0} [arctan(1+x²)·2x] / (2x) = (2/3)·lim_{x→0} arctan(1+x²)。\n7. 当x→0时，arctan(1+x²) → arctan(1) = π/4。\n8. 最终结果为：(2/3)·(π/4) = π/6。\n\n注意：题目文本中已经给出了完整的解题过程，没有缺失数据或图表。",
         "knowledge_point": "[\"三角函数\",\"积分变换\"]",
         "tip": "这是一道题目分析：三角积分。 难度：6/10"
