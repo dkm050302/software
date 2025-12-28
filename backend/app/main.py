@@ -3,15 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin
 from app.database import engine
 from app import models
+from app.routers import map_save
+
 
 # Create Database Tables
 models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title="AI Tutor API",
     description="Backend for AI Tutor Application",
     version="1.0.0"
 )
+app.include_router(map_save.router, prefix="/api/maps", tags=["maps"])
+
 
 # CORS Configuration
 origins = [

@@ -1,3 +1,4 @@
+/* frontend/src/App.jsx */
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -9,6 +10,7 @@ import ParentView from './pages/ParentView';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import NoteManager from './pages/NoteManager';   // ← 新增1：引入页面
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -39,7 +41,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
+
       <Route path="/" element={
         <ProtectedRoute>
           <Layout />
@@ -49,6 +51,7 @@ function App() {
         <Route path="notes" element={<NoteAssistant />} />
         <Route path="maps" element={<MapGeneration />} />
         <Route path="errors" element={<ErrorBook />} />
+        <Route path="notes-manager" element={<NoteManager />} />   {/* ← 新增2：路由 */}
         <Route path="parents" element={<ParentView />} />
         <Route path="admin" element={
           <AdminRoute>

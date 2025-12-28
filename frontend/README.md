@@ -7,11 +7,18 @@ This is the React frontend for the AI Tutor application.
 1.  **Install Dependencies**:
     Open a terminal in this `frontend` folder and run:
     `ash
-    npm install
+
+
+    npm install 
+    npm i react-markdown remark-gfm
+    npm i github-markdown-css
+    npm i html2canvas
+
     ``n
 2.  **Run Development Server**:
     ` ash
 npm run dev
+npm run dev:frontend
 ``n    The application will be available at  `http://localhost:5173`.
 
 ## Features

@@ -102,4 +102,63 @@ class LLMService:
         except Exception as e:
             return f"Error generating report: {e}"
 
+    async def generate_mermaid(self, text: str) -> str:
+        prompt = (
+            "将以下内容转成 Mermaid 思维导图代码，只返回代码，不要解释：\n"
+            "格式：graph TD; A[主题] --> B[子主题1]; A --> C[子主题2]; ...\n\n"
+            f"内容：\n{text}"
+        )
+        messages = [{"role": "user", "content": prompt}]
+        try:
+            response_data = await self._call_deepseek(messages)
+            return response_data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"generate_mermaid error: {e}")
+            return "graph TD; A[Error] --> B[Failed to generate];"
+
+    async def summarize_knowledge_points(self, raw_text: str) -> dict:
+        prompt = f"""
+        请把下面的课件/教材内容整理成一份**课堂笔记**，要求：
+        1. 用中文、条目化、层次清晰，适合学生直接复习；
+        2. 保留关键定义、公式、结论，加少量解释或易错提示；
+        3. 如有例子，把解题/推理步骤也写出来；
+        4. 总字数 300～800 字左右，不要过度精简；
+        5. **额外返回** 本次内容最贴切的
+           subject（学科，如"操作系统"）、
+           chapter（章节，如"进程与线程"）、
+           knowledge_point（知识点，如"进程定义"）；
+        6. 输出合法 JSON，格式：
+        {{
+          "title": "一句话标题",
+          "notes": "……完整笔记正文……",
+          "subject": "示例学科",
+          "chapter": "示例章节",
+          "knowledge_point": "示例知识点"
+        }}
+
+        待整理内容：
+        {raw_text}
+        """
+        messages = [
+            {"role": "system", "content": "你是擅长把教材改写成学生手写笔记的 AI 助教，只返回合法 JSON，不解释。"},
+            {"role": "user", "content": prompt}
+        ]
+        try:
+            res = await self._call_deepseek(messages, response_format="json_object")
+            content = res["choices"][0]["message"]["content"]
+            return json.loads(content)
+        except Exception as e:
+            return {"title": "笔记生成失败", "notes": str(e)}
+
+    async def generate_plain(self, prompt: str) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        res = await self._call_deepseek(messages, response_format="text")
+        return res["choices"][0]["message"]["content"]
+
+    async def generate_plain(self, prompt: str) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        res = await self._call_deepseek(messages, response_format="text")
+        return res["choices"][0]["message"]["content"]
+
+
 llm_service = LLMService()
