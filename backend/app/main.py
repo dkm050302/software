@@ -6,6 +6,8 @@ from pathlib import Path
 from app.routers import note_assistant, map_generation, error_book, dashboard, parent_view, auth, admin, syllabus
 from app.database import engine
 from app import models
+from app.routers import map_save
+
 from app.services import data_sync
 from contextlib import asynccontextmanager
 
@@ -25,6 +27,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+app.include_router(map_save.router, prefix="/api/maps", tags=["maps"])
+
 
 # CORS Configuration
 origins = [

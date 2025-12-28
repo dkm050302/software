@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pathlib import Path
+
 
 class Settings(BaseSettings):
     # App Config
@@ -19,6 +21,12 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: Optional[str] = None
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
 
+    # DASHSCOPE Config
+    DASHSCOPE_API_KEY: Optional[str] = None
+
+    NOTE_DIR: Path = Path("data/notes")
+    NOTE_DIR.mkdir(parents=True, exist_ok=True)
+
     class Config:
         import os
         # Get the directory of the current file (app/config.py)
@@ -26,5 +34,8 @@ class Settings(BaseSettings):
         # Go up one level to backend/
         backend_dir = os.path.dirname(current_dir)
         env_file = os.path.join(backend_dir, ".env")
+        env_file = ".env"
+        extra = "ignore"
+
 
 settings = Settings()

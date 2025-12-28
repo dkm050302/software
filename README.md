@@ -23,7 +23,7 @@ This project is a full-stack application for an AI-powered tutor assistant.
    # Mac/Linux
    source venv/bin/activate
    ```
-3. Install dependencies:
+3. Install dependencies: 
    ```bash
    pip install -r requirements.txt
    ```

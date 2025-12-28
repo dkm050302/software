@@ -11,6 +11,8 @@ import Admin from "./pages/Admin";
 import Syllabus from "./pages/Syllabus";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+/* frontend/src/App.jsx */
+import NoteManager from './pages/NoteManager';   // ← 新增1：引入页面
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -71,9 +73,11 @@ const TeacherRoute = ({ children }) => {
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      {/* 公共页面 */}
+      <Route path="/login"    element={<Login />} />
       <Route path="/register" element={<Register />} />
 
+      {/* 受保护的主布局 */}
       <Route
         path="/"
         element={
@@ -82,12 +86,14 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<DashboardRoute />} />
-        <Route path="notes" element={<NoteAssistant />} />
-        <Route path="maps" element={<MapGeneration />} />
-        <Route path="errors/create" element={<ErrorBook />} />
-        <Route path="errors/view" element={<ViewErrorBook />} />
-        <Route path="parents" element={<ParentView />} />
+        <Route index element={<Dashboard />} />
+        <Route path="notes"        element={<NoteAssistant />} />
+        <Route path="maps"         element={<MapGeneration />} />
+        <Route path="errors"       element={<ErrorBook />} />
+        <Route path="errors/create" element={<ViewErrorBook />} />
+        <Route path="errors/view"   element={<ViewErrorBook />} />
+        <Route path="notes-manager" element={<NoteManager />} />
+        <Route path="parents"       element={<ParentView />} />
         <Route
           path="syllabus"
           element={
@@ -104,7 +110,7 @@ function App() {
             </AdminRoute>
           }
         />
-      </Route>
+      </Route>   {/* 这里是真正的闭合 */}
     </Routes>
   );
 }

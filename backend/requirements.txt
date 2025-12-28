@@ -1,6 +1,7 @@
 fastapi>=0.100.0
 uvicorn>=0.23.0
 python-multipart
+openai>=1.0.0
 pydantic-settings>=2.0.0
 sqlalchemy>=2.0.0
 passlib
@@ -10,4 +11,16 @@ httpx>=0.24.0
 # whisper # Uncomment if running locally, or use API
 # pytesseract # For OCR if running locally
 # pillow
+reportlab
+openai-whisper>=20231117
+ffmpeg-python==0.2.0
+zhconv
+httpx
+python-pptx>=1.0.0
+pdfplumber>=0.10.0
+pytesseract>=0.3.10
+opencv-python>=4.8.0
+pillow>=10.0.0
+requests
+pandas
 reportlab
