@@ -73,6 +73,11 @@ export default function Layout() {
     return getUserTypeFromToken() === "teacher";
   };
 
+  // 检查是否是家长身份
+  const isParent = () => {
+    return getUserTypeFromToken() === "parent";
+  };
+
   // 如果是管理员，只显示管理员界面
   let menuItems = [];
   if (isAdmin()) {
@@ -87,14 +92,20 @@ export default function Layout() {
       { text: "教学大纲", icon: <MenuBookIcon />, path: "/syllabus" },
       { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
     ];
+  } else if (isParent()) {
+    // 家长显示专用菜单
+    menuItems = [
+      { text: "Parent View", icon: <FamilyIcon />, path: "/parents" },
+      { text: "学生错题本", icon: <ErrorIcon />, path: "/errors/view" },
+      { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
+    ];
   } else {
-    // 非管理员、非教师显示常规菜单
+    // 非管理员、非教师、非家长显示常规菜单（学生）
     menuItems = [
       { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
       { text: "Note Assistant", icon: <NoteIcon />, path: "/notes" },
       { text: "Map Generation", icon: <MapIcon />, path: "/maps" },
       { text: "Error Book", icon: <ErrorIcon />, path: "/errors" },
-      { text: "Parent View", icon: <FamilyIcon />, path: "/parents" },
       { text: "个人页面", icon: <PersonIcon />, path: "/profile" },
     ];
   }

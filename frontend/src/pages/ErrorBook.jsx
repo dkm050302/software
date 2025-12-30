@@ -68,8 +68,12 @@ export default function ErrorBook() {
 
     return () => clearInterval(intervalId);  }, []);
 
-  // Derived Options
-  const availableSubjects = studentInfo?.teachers?.map(t => t.subject).filter(Boolean) || [];
+  // Derived Options - Remove duplicates from subjects
+  const availableSubjects = React.useMemo(() => {
+    if (!studentInfo?.teachers) return [];
+    const subjects = studentInfo.teachers.map(t => t.subject).filter(Boolean);
+    return [...new Set(subjects)]; // Remove duplicates
+  }, [studentInfo]);
   
   const availableChapters = React.useMemo(() => {
     if (!selectedSubject || !studentInfo) return [];

@@ -6,7 +6,7 @@ import {
   TableContainer, TableHead, TableRow, IconButton,
   Card, CardContent, Divider, ButtonGroup, Tooltip, Checkbox
 } from '@mui/material';
-import { Save as SaveIcon, FormatBold, FormatItalic, FormatSize, Code, Delete as DeleteIcon } from '@mui/icons-material';
+import { Save as SaveIcon, FormatBold, FormatItalic, FormatSize, Code, Delete as DeleteIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import api from '../services/api';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -14,8 +14,25 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
 export default function ViewErrorBook() {
+  // Check user type
+  const getUserType = () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.user_type;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const isParent = getUserType() === "parent";
+  const isStudent = getUserType() === "student";
+
   // Data State
   const [filterData, setFilterData] = useState([]);
+  const [studentIds, setStudentIds] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   
   // Constants
   const ALL_OPTION = "__ALL__";
@@ -35,6 +52,9 @@ export default function ViewErrorBook() {
   const [editContent, setEditContent] = useState('');
   const [editNote, setEditNote] = useState('');
   const [saving, setSaving] = useState(false);
+  
+  // Image refresh state
+  const [imageRefreshKey, setImageRefreshKey] = useState(0);
 
   // Batch Selection State
   const [selectedIds, setSelectedIds] = useState([]);
@@ -43,14 +63,41 @@ export default function ViewErrorBook() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get('/errors/filters');
-        setFilterData(res.data);
+        if (isParent) {
+          // For parents, fetch student IDs
+          const studentRes = await api.get('/parents/student-id');
+          setStudentIds(studentRes.data.student_ids || []);
+          if (studentRes.data.student_ids && studentRes.data.student_ids.length > 0) {
+            setSelectedStudentId(studentRes.data.student_ids[0]);
+          }
+        } else {
+          // For students, fetch filters
+          const res = await api.get('/errors/filters');
+          setFilterData(res.data);
+        }
       } catch (error) {
         console.error("Error fetching filter data:", error);
       }
     };
     fetchData();
-  }, []);
+  }, [isParent]);
+
+  // Fetch filters when student ID changes (for parents)
+  useEffect(() => {
+    const fetchFilters = async () => {
+      if (isParent && selectedStudentId) {
+        try {
+          const res = await api.get('/parents/mistakes/filters', {
+            params: { student_id: selectedStudentId }
+          });
+          setFilterData(res.data || []);
+        } catch (error) {
+          console.error("Error fetching filter data:", error);
+        }
+      }
+    };
+    fetchFilters();
+  }, [isParent, selectedStudentId]);
 
   // Derived Options
   const availableSubjects = useMemo(() => {
@@ -105,6 +152,12 @@ export default function ViewErrorBook() {
     setSelectedMistake(null);
     try {
       const params = {};
+      
+      // For parents, add student_id parameter
+      if (isParent && selectedStudentId) {
+        params.student_id = selectedStudentId;
+      }
+      
       // Only add params if not "All" option
       if (selectedSubject && selectedSubject !== ALL_OPTION) {
         params.subject = selectedSubject;
@@ -118,7 +171,9 @@ export default function ViewErrorBook() {
         params.knowledge_points = JSON.stringify(selectedKnowledgePoints);
       }
       
-      const res = await api.get('/errors/list', { params });
+      // Use different API endpoint for parents
+      const endpoint = isParent ? '/parents/mistakes' : '/errors/list';
+      const res = await api.get(endpoint, { params });
       setMistakes(res.data);
       setHasSearched(true);
     } catch (error) {
@@ -246,7 +301,28 @@ export default function ViewErrorBook() {
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
+          {isParent && studentIds.length > 0 && (
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>学生</InputLabel>
+                <Select
+                  value={selectedStudentId}
+                  label="学生"
+                  onChange={(e) => {
+                    setSelectedStudentId(e.target.value);
+                    setSelectedSubject(ALL_OPTION);
+                    setSelectedChapter('');
+                    setSelectedKnowledgePoints([]);
+                  }}
+                >
+                  {studentIds.map(sid => (
+                    <MenuItem key={sid} value={sid}>{sid}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+          <Grid item xs={12} md={isParent && studentIds.length > 0 ? 2 : 3}>
             <FormControl fullWidth>
               <InputLabel>Subject</InputLabel>
               <Select
@@ -263,7 +339,7 @@ export default function ViewErrorBook() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={isParent && studentIds.length > 0 ? 2 : 3}>
             <FormControl fullWidth disabled={!selectedSubject || selectedSubject === ALL_OPTION}>
               <InputLabel>Chapter</InputLabel>
               <Select
@@ -280,7 +356,7 @@ export default function ViewErrorBook() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={isParent && studentIds.length > 0 ? 3 : 4}>
             <FormControl fullWidth disabled={!selectedChapter || selectedChapter === ALL_OPTION}>
               <InputLabel>Knowledge Points</InputLabel>
               <Select
@@ -319,12 +395,12 @@ export default function ViewErrorBook() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={isParent && studentIds.length > 0 ? 2 : 2}>
             <Button 
               variant="contained" 
               fullWidth 
               onClick={handleSearch}
-              disabled={loading}
+              disabled={loading || (isParent && !selectedStudentId)}
             >
               {loading ? <CircularProgress size={24} /> : "Search"}
             </Button>
@@ -335,7 +411,7 @@ export default function ViewErrorBook() {
       {/* Results Table */}
       {hasSearched && (
         <Paper sx={{ mb: 3 }}>
-          {selectedIds.length > 0 && (
+          {!isParent && selectedIds.length > 0 && (
             <Box sx={{ p: 2, bgcolor: '#ffebee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="subtitle1" color="error">
                 {selectedIds.length} selected
@@ -354,13 +430,15 @@ export default function ViewErrorBook() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      indeterminate={selectedIds.length > 0 && selectedIds.length < mistakes.length}
-                      checked={mistakes.length > 0 && selectedIds.length === mistakes.length}
-                      onChange={handleSelectAll}
-                    />
-                  </TableCell>
+                  {!isParent && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        indeterminate={selectedIds.length > 0 && selectedIds.length < mistakes.length}
+                        checked={mistakes.length > 0 && selectedIds.length === mistakes.length}
+                        onChange={handleSelectAll}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>Content</TableCell>
                   <TableCell>Note</TableCell>
                 </TableRow>
@@ -368,7 +446,7 @@ export default function ViewErrorBook() {
               <TableBody>
                 {mistakes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} align="center">No mistakes found.</TableCell>
+                    <TableCell colSpan={isParent ? 2 : 3} align="center">No mistakes found.</TableCell>
                   </TableRow>
                 ) : (
                   mistakes.map((mistake) => {
@@ -381,12 +459,14 @@ export default function ViewErrorBook() {
                         selected={selectedMistake?.id === mistake.id}
                         sx={{ cursor: 'pointer' }}
                       >
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={isItemSelected}
-                            onClick={(event) => handleSelectOne(event, mistake.id)}
-                          />
-                        </TableCell>
+                        {!isParent && (
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              checked={isItemSelected}
+                              onClick={(event) => handleSelectOne(event, mistake.id)}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {mistake.content}
                         </TableCell>
@@ -417,13 +497,15 @@ export default function ViewErrorBook() {
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="subtitle1">Content</Typography>
-                    <ButtonGroup size="small">
-                      <Tooltip title="Bold"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '**', '**')}><FormatBold /></IconButton></Tooltip>
-                      <Tooltip title="Italic"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '*', '*')}><FormatItalic /></IconButton></Tooltip>
-                      <Tooltip title="Heading"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '### ')}><FormatSize /></IconButton></Tooltip>
-                      <Tooltip title="Inline Math"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '$', '$')}><Code /></IconButton></Tooltip>
-                      <Tooltip title="Block Math"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '$$', '$$')}><Code /></IconButton></Tooltip>
-                    </ButtonGroup>
+                    {!isParent && (
+                      <ButtonGroup size="small">
+                        <Tooltip title="Bold"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '**', '**')}><FormatBold /></IconButton></Tooltip>
+                        <Tooltip title="Italic"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '*', '*')}><FormatItalic /></IconButton></Tooltip>
+                        <Tooltip title="Heading"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '### ')}><FormatSize /></IconButton></Tooltip>
+                        <Tooltip title="Inline Math"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '$', '$')}><Code /></IconButton></Tooltip>
+                        <Tooltip title="Block Math"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '$$', '$$')}><Code /></IconButton></Tooltip>
+                      </ButtonGroup>
+                    )}
                   </Box>
                   {selectedMistake.graph_1 && (() => {
                     // Handle both old format (uploads/mistakes/xxx.jpg) and new format (mistakes/xxx.jpg)
@@ -431,38 +513,58 @@ export default function ViewErrorBook() {
                       ? selectedMistake.graph_1.substring(8) 
                       : selectedMistake.graph_1;
                     return (
-                      <Box sx={{ mb: 2 }}>
+                      <Box sx={{ mb: 2, position: 'relative' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<RefreshIcon />}
+                            onClick={() => setImageRefreshKey(prev => prev + 1)}
+                          >
+                            刷新图片
+                          </Button>
+                        </Box>
                         <img 
-                          src={`/api/uploads/${imagePath}`} 
+                          key={`graph1-${imageRefreshKey}`}
+                          src={`/api/uploads/${imagePath}?t=${Date.now()}`} 
                           alt="Mistake" 
                           style={{ maxWidth: '100%', maxHeight: 300 }} 
                           onError={(e) => {
                             console.error('Failed to load image:', selectedMistake.graph_1);
                             console.error('Processed path:', imagePath);
                             console.error('Attempted URL:', e.target.src);
-                            e.target.style.display = 'none';
                           }}
                         />
                       </Box>
                     );
                   })()}
-                  <TextField
-                    id="content-editor"
-                    fullWidth
-                    multiline
-                    rows={8}
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    label="Edit Content"
-                    variant="outlined"
-                    sx={{ mb: 2 }}
-                  />
-                  <Typography variant="subtitle2" color="text.secondary">Preview:</Typography>
-                  <Box sx={{ p: 1, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100, maxHeight: 300, overflow: 'auto' }}>
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {editContent}
-                    </ReactMarkdown>
-                  </Box>
+                  {isParent ? (
+                    <Typography variant="body1" sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100 }}>
+                      {selectedMistake.content || '无内容'}
+                    </Typography>
+                  ) : (
+                    <TextField
+                      id="content-editor"
+                      fullWidth
+                      multiline
+                      rows={8}
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      label="Edit Content"
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                  {!isParent && (
+                    <>
+                      <Typography variant="subtitle2" color="text.secondary">Preview:</Typography>
+                      <Box sx={{ p: 1, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100, maxHeight: 300, overflow: 'auto' }}>
+                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {editContent}
+                        </ReactMarkdown>
+                      </Box>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -473,13 +575,15 @@ export default function ViewErrorBook() {
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="subtitle1">Note</Typography>
-                    <ButtonGroup size="small">
-                      <Tooltip title="Bold"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '**', '**')}><FormatBold /></IconButton></Tooltip>
-                      <Tooltip title="Italic"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '*', '*')}><FormatItalic /></IconButton></Tooltip>
-                      <Tooltip title="Heading"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '### ')}><FormatSize /></IconButton></Tooltip>
-                      <Tooltip title="Inline Math"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '$', '$')}><Code /></IconButton></Tooltip>
-                      <Tooltip title="Block Math"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '$$', '$$')}><Code /></IconButton></Tooltip>
-                    </ButtonGroup>
+                    {!isParent && (
+                      <ButtonGroup size="small">
+                        <Tooltip title="Bold"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '**', '**')}><FormatBold /></IconButton></Tooltip>
+                        <Tooltip title="Italic"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '*', '*')}><FormatItalic /></IconButton></Tooltip>
+                        <Tooltip title="Heading"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '### ')}><FormatSize /></IconButton></Tooltip>
+                        <Tooltip title="Inline Math"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '$', '$')}><Code /></IconButton></Tooltip>
+                        <Tooltip title="Block Math"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '$$', '$$')}><Code /></IconButton></Tooltip>
+                      </ButtonGroup>
+                    )}
                   </Box>
                   {selectedMistake.graph_2 && (() => {
                     // Handle both old format (uploads/mistakes/xxx.jpg) and new format (mistakes/xxx.jpg)
@@ -487,61 +591,83 @@ export default function ViewErrorBook() {
                       ? selectedMistake.graph_2.substring(8) 
                       : selectedMistake.graph_2;
                     return (
-                      <Box sx={{ mb: 2 }}>
+                      <Box sx={{ mb: 2, position: 'relative' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<RefreshIcon />}
+                            onClick={() => setImageRefreshKey(prev => prev + 1)}
+                          >
+                            刷新图片
+                          </Button>
+                        </Box>
                         <img 
-                          src={`/api/uploads/${imagePath}`} 
+                          key={`graph2-${imageRefreshKey}`}
+                          src={`/api/uploads/${imagePath}?t=${Date.now()}`} 
                           alt="Analysis" 
                           style={{ maxWidth: '100%', maxHeight: 300 }} 
                           onError={(e) => {
                             console.error('Failed to load image:', selectedMistake.graph_2);
                             console.error('Processed path:', imagePath);
                             console.error('Attempted URL:', e.target.src);
-                            e.target.style.display = 'none';
                           }}
                         />
                       </Box>
                     );
                   })()}
-                  <TextField
-                    id="note-editor"
-                    fullWidth
-                    multiline
-                    rows={8}
-                    value={editNote}
-                    onChange={(e) => setEditNote(e.target.value)}
-                    label="Edit Note"
-                    variant="outlined"
-                    sx={{ mb: 2 }}
-                  />
-                  <Typography variant="subtitle2" color="text.secondary">Preview:</Typography>
-                  <Box sx={{ p: 1, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100, maxHeight: 300, overflow: 'auto' }}>
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {editNote}
-                    </ReactMarkdown>
-                  </Box>
+                  {isParent ? (
+                    <Typography variant="body1" sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100 }}>
+                      {selectedMistake.note || '无笔记'}
+                    </Typography>
+                  ) : (
+                    <TextField
+                      id="note-editor"
+                      fullWidth
+                      multiline
+                      rows={8}
+                      value={editNote}
+                      onChange={(e) => setEditNote(e.target.value)}
+                      label="Edit Note"
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                  {!isParent && (
+                    <>
+                      <Typography variant="subtitle2" color="text.secondary">Preview:</Typography>
+                      <Box sx={{ p: 1, bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 100, maxHeight: 300, overflow: 'auto' }}>
+                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {editNote}
+                        </ReactMarkdown>
+                      </Box>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
 
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-            <Button 
-              variant="outlined" 
-              color="error"
-              startIcon={<DeleteIcon />} 
-              onClick={handleDelete}
-            >
-              Delete Mistake
-            </Button>
-            <Button 
-              variant="contained" 
-              startIcon={<SaveIcon />} 
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </Box>
+          {!isParent && (
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+              <Button 
+                variant="outlined" 
+                color="error"
+                startIcon={<DeleteIcon />} 
+                onClick={handleDelete}
+              >
+                Delete Mistake
+              </Button>
+              <Button 
+                variant="contained" 
+                startIcon={<SaveIcon />} 
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </Box>
+          )}
         </Paper>
       )}
     </Box>
