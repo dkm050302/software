@@ -111,7 +111,9 @@ async def create_mistake(
         return filename[:100]  # Limit length
     
     graph_1_filename = sanitize_filename(graph_1.filename)
+    # Store relative path without 'uploads/' prefix for cleaner URL construction
     graph_1_path = f"{upload_dir}/{user.student_id}_{timestamp}_1_{graph_1_filename}"
+    graph_1_db_path = f"mistakes/{user.student_id}_{timestamp}_1_{graph_1_filename}"
     
     try:
         with open(graph_1_path, "wb") as buffer:
@@ -121,9 +123,11 @@ async def create_mistake(
         raise HTTPException(status_code=500, detail=f"Failed to save image: {str(e)}")
         
     graph_2_path = None
+    graph_2_db_path = None
     if graph_2:
         graph_2_filename = sanitize_filename(graph_2.filename)
         graph_2_path = f"{upload_dir}/{user.student_id}_{timestamp}_2_{graph_2_filename}"
+        graph_2_db_path = f"mistakes/{user.student_id}_{timestamp}_2_{graph_2_filename}"
         try:
             with open(graph_2_path, "wb") as buffer:
                 shutil.copyfileobj(graph_2.file, buffer)
@@ -131,6 +135,7 @@ async def create_mistake(
             print(f"Error saving graph_2: {e}")
             # If graph_2 fails, we can still save the mistake with just graph_1
             graph_2_path = None
+            graph_2_db_path = None
 
     # Parse date
     try:
@@ -152,6 +157,7 @@ async def create_mistake(
 
     # Create DB entry
     # Note: ID is auto-incremented by database
+    # Store relative path without 'uploads/' prefix for cleaner URL construction
     mistake = models.LearningMistake(
         student_id=user.student_id,
         date=mistake_date,
@@ -161,8 +167,8 @@ async def create_mistake(
         content=content,
         note=note,
         tip=tip,
-        graph_1=graph_1_path,
-        graph_2=graph_2_path
+        graph_1=graph_1_db_path,
+        graph_2=graph_2_db_path
     )
     
     try:

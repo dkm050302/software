@@ -189,19 +189,20 @@ class LLMService:
         if subject and subject != "General":
             prompt = f'''
             请根据以下学生在"{subject}"学科的错题和笔记数据，生成一份详细的学习报告。
-            报告必须使用 LaTeX 格式编写。
+            报告必须使用 Markdown 格式编写，数学公式使用 LaTeX 语法并用 $ 或 $$ 包裹。
             
             数据: {json.dumps(data, ensure_ascii=False)}
             
             要求:
             1. 分析错题和笔记情况。
             2. 给出具体的学习建议。
-            3. 仅输出 LaTeX 代码（正文部分），不要包含 markdown 代码块标记。
+            3. 使用 Markdown 格式，数学公式用 $ 包裹（行内公式）或 $$ 包裹（块级公式）。
+            4. 不要包含代码块标记。
             '''
         else:
             prompt = f'''
             请根据以下学生本周的学习数据（涵盖所有学科的错题和笔记），生成一份总体学习状况报告。
-            报告必须使用 LaTeX 格式编写。
+            报告必须使用 Markdown 格式编写，数学公式使用 LaTeX 语法并用 $ 或 $$ 包裹。
             
             数据: {json.dumps(data, ensure_ascii=False)}
             
@@ -209,11 +210,12 @@ class LLMService:
             1. 总结整体学习状况。
             2. 识别薄弱学科。
             3. 给出总体学习建议。
-            4. 仅输出 LaTeX 代码（正文部分），不要包含 markdown 代码块标记。
+            4. 使用 Markdown 格式，数学公式用 $ 包裹（行内公式）或 $$ 包裹（块级公式）。
+            5. 不要包含代码块标记。
             '''
 
         messages = [
-            {"role": "system", "content": "你是一位专业的教育AI助手。"},
+            {"role": "system", "content": "你是一位专业的教育AI助手。请使用 Markdown 格式输出，数学公式用 LaTeX 语法并用 $ 或 $$ 包裹。"},
             {"role": "user", "content": prompt}
         ]
         
@@ -221,7 +223,7 @@ class LLMService:
             response = await self._call_deepseek(messages)
             content = response["choices"][0]["message"]["content"]
             # Clean up markdown code blocks if present
-            content = content.replace("```latex", "").replace("```", "").strip()
+            content = content.replace("```markdown", "").replace("```latex", "").replace("```", "").strip()
             return content
         except Exception as e:
             print(f"Error generating weekly analysis: {e}")

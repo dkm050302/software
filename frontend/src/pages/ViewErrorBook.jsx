@@ -17,8 +17,11 @@ export default function ViewErrorBook() {
   // Data State
   const [filterData, setFilterData] = useState([]);
   
+  // Constants
+  const ALL_OPTION = "__ALL__";
+
   // Filter State
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState(ALL_OPTION);
   const [selectedChapter, setSelectedChapter] = useState('');
   const [selectedKnowledgePoints, setSelectedKnowledgePoints] = useState([]);
   
@@ -55,7 +58,7 @@ export default function ViewErrorBook() {
   }, [filterData]);
   
   const availableChapters = useMemo(() => {
-    if (!selectedSubject) return [];
+    if (!selectedSubject || selectedSubject === ALL_OPTION) return [];
     return [...new Set(
       filterData
         .filter(item => item.subject === selectedSubject)
@@ -65,7 +68,7 @@ export default function ViewErrorBook() {
   }, [selectedSubject, filterData]);
 
   const availableKnowledgePoints = useMemo(() => {
-    if (!selectedSubject || !selectedChapter) return [];
+    if (!selectedSubject || selectedSubject === ALL_OPTION || !selectedChapter || selectedChapter === ALL_OPTION) return [];
     return [...new Set(
       filterData
         .filter(item => item.subject === selectedSubject && item.chapter === selectedChapter)
@@ -76,14 +79,25 @@ export default function ViewErrorBook() {
 
   // Handlers
   const handleSubjectChange = (e) => {
-    setSelectedSubject(e.target.value);
-    setSelectedChapter('');
-    setSelectedKnowledgePoints([]);
+    const value = e.target.value;
+    setSelectedSubject(value);
+    if (value === ALL_OPTION) {
+      setSelectedChapter('');
+      setSelectedKnowledgePoints([]);
+    } else {
+      setSelectedChapter('');
+      setSelectedKnowledgePoints([]);
+    }
   };
 
   const handleChapterChange = (e) => {
-    setSelectedChapter(e.target.value);
-    setSelectedKnowledgePoints([]);
+    const value = e.target.value;
+    setSelectedChapter(value);
+    if (value === ALL_OPTION) {
+      setSelectedKnowledgePoints([]);
+    } else {
+      setSelectedKnowledgePoints([]);
+    }
   };
 
   const handleSearch = async () => {
@@ -91,9 +105,14 @@ export default function ViewErrorBook() {
     setSelectedMistake(null);
     try {
       const params = {};
-      if (selectedSubject) params.subject = selectedSubject;
-      if (selectedChapter) params.chapter = selectedChapter;
-      if (selectedKnowledgePoints.length > 0) {
+      // Only add params if not "All" option
+      if (selectedSubject && selectedSubject !== ALL_OPTION) {
+        params.subject = selectedSubject;
+      }
+      if (selectedChapter && selectedChapter !== ALL_OPTION) {
+        params.chapter = selectedChapter;
+      }
+      if (selectedKnowledgePoints.length > 0 && !selectedKnowledgePoints.includes(ALL_OPTION)) {
         // Send as JSON string or comma separated, backend handles both.
         // Using JSON string to be safe with commas in tags
         params.knowledge_points = JSON.stringify(selectedKnowledgePoints);
@@ -235,6 +254,9 @@ export default function ViewErrorBook() {
                 label="Subject"
                 onChange={handleSubjectChange}
               >
+                <MenuItem value={ALL_OPTION}>
+                  <em>All</em>
+                </MenuItem>
                 {availableSubjects.map(s => (
                   <MenuItem key={s} value={s}>{s}</MenuItem>
                 ))}
@@ -242,13 +264,16 @@ export default function ViewErrorBook() {
             </FormControl>
           </Grid>
           <Grid item xs={12} md={3}>
-            <FormControl fullWidth disabled={!selectedSubject}>
+            <FormControl fullWidth disabled={!selectedSubject || selectedSubject === ALL_OPTION}>
               <InputLabel>Chapter</InputLabel>
               <Select
                 value={selectedChapter}
                 label="Chapter"
                 onChange={handleChapterChange}
               >
+                <MenuItem value={ALL_OPTION}>
+                  <em>All</em>
+                </MenuItem>
                 {availableChapters.map(c => (
                   <MenuItem key={c} value={c}>{c}</MenuItem>
                 ))}
@@ -256,21 +281,36 @@ export default function ViewErrorBook() {
             </FormControl>
           </Grid>
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth disabled={!selectedChapter}>
+            <FormControl fullWidth disabled={!selectedChapter || selectedChapter === ALL_OPTION}>
               <InputLabel>Knowledge Points</InputLabel>
               <Select
                 multiple
                 value={selectedKnowledgePoints}
-                onChange={(e) => setSelectedKnowledgePoints(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const newValue = typeof value === 'string' ? value.split(',') : value;
+                  // If "All" is selected, clear other selections and only keep "All"
+                  if (newValue.includes(ALL_OPTION)) {
+                    setSelectedKnowledgePoints([ALL_OPTION]);
+                  } else {
+                    setSelectedKnowledgePoints(newValue);
+                  }
+                }}
                 input={<OutlinedInput label="Knowledge Points" />}
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} />
-                    ))}
+                    {selected.map((value) => {
+                      if (value === ALL_OPTION) {
+                        return <Chip key={value} label="All" color="primary" />;
+                      }
+                      return <Chip key={value} label={value} />;
+                    })}
                   </Box>
                 )}
               >
+                <MenuItem value={ALL_OPTION}>
+                  <em>All</em>
+                </MenuItem>
                 {availableKnowledgePoints.map((kp) => (
                   <MenuItem key={kp} value={kp}>
                     {kp}
@@ -385,15 +425,27 @@ export default function ViewErrorBook() {
                       <Tooltip title="Block Math"><IconButton onClick={() => insertText('content-editor', editContent, setEditContent, '$$', '$$')}><Code /></IconButton></Tooltip>
                     </ButtonGroup>
                   </Box>
-                  {selectedMistake.graph_1 && (
-                    <Box sx={{ mb: 2 }}>
-                      <img 
-                        src={`${api.defaults.baseURL}/${selectedMistake.graph_1}`} 
-                        alt="Mistake" 
-                        style={{ maxWidth: '100%', maxHeight: 300 }} 
-                      />
-                    </Box>
-                  )}
+                  {selectedMistake.graph_1 && (() => {
+                    // Handle both old format (uploads/mistakes/xxx.jpg) and new format (mistakes/xxx.jpg)
+                    const imagePath = selectedMistake.graph_1.startsWith('uploads/') 
+                      ? selectedMistake.graph_1.substring(8) 
+                      : selectedMistake.graph_1;
+                    return (
+                      <Box sx={{ mb: 2 }}>
+                        <img 
+                          src={`/api/uploads/${imagePath}`} 
+                          alt="Mistake" 
+                          style={{ maxWidth: '100%', maxHeight: 300 }} 
+                          onError={(e) => {
+                            console.error('Failed to load image:', selectedMistake.graph_1);
+                            console.error('Processed path:', imagePath);
+                            console.error('Attempted URL:', e.target.src);
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </Box>
+                    );
+                  })()}
                   <TextField
                     id="content-editor"
                     fullWidth
@@ -429,15 +481,27 @@ export default function ViewErrorBook() {
                       <Tooltip title="Block Math"><IconButton onClick={() => insertText('note-editor', editNote, setEditNote, '$$', '$$')}><Code /></IconButton></Tooltip>
                     </ButtonGroup>
                   </Box>
-                  {selectedMistake.graph_2 && (
-                    <Box sx={{ mb: 2 }}>
-                      <img 
-                        src={`${api.defaults.baseURL}/${selectedMistake.graph_2}`} 
-                        alt="Analysis" 
-                        style={{ maxWidth: '100%', maxHeight: 300 }} 
-                      />
-                    </Box>
-                  )}
+                  {selectedMistake.graph_2 && (() => {
+                    // Handle both old format (uploads/mistakes/xxx.jpg) and new format (mistakes/xxx.jpg)
+                    const imagePath = selectedMistake.graph_2.startsWith('uploads/') 
+                      ? selectedMistake.graph_2.substring(8) 
+                      : selectedMistake.graph_2;
+                    return (
+                      <Box sx={{ mb: 2 }}>
+                        <img 
+                          src={`/api/uploads/${imagePath}`} 
+                          alt="Analysis" 
+                          style={{ maxWidth: '100%', maxHeight: 300 }} 
+                          onError={(e) => {
+                            console.error('Failed to load image:', selectedMistake.graph_2);
+                            console.error('Processed path:', imagePath);
+                            console.error('Attempted URL:', e.target.src);
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </Box>
+                    );
+                  })()}
                   <TextField
                     id="note-editor"
                     fullWidth

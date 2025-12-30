@@ -109,7 +109,7 @@ function App() {
         <Route path="notes" element={<NoteAssistant />} />
         <Route path="maps" element={<MapGeneration />} />
         <Route path="errors" element={<ErrorBook />} />
-        <Route path="errors/create" element={<ViewErrorBook />} />
+        <Route path="errors/create" element={<ErrorBook />} />
         <Route path="errors/view" element={<ViewErrorBook />} />
         <Route path="notes-manager" element={<NoteManager />} />
         <Route path="parents" element={<ParentView />} />

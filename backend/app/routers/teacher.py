@@ -68,15 +68,62 @@ def extract_subject_content(tip: str, subject: str) -> str:
     if not tip or not subject:
         return ""
     
-    # 匹配 **学科名** 后面的内容，直到下一个 **学科名** 或文本结束
-    pattern = re.compile(
-        f"\\*\\*{re.escape(subject)}\\*\\*\\s*\\n?([^\\*]+?)(?=\\*\\*|$)",
-        re.DOTALL
-    )
-    match = pattern.search(tip)
+    # 尝试多种格式匹配
+    patterns = [
+        # 格式1: **学科名** 后面的内容
+        re.compile(
+            f"\\*\\*{re.escape(subject)}\\*\\*\\s*\\n?([^\\*]+?)(?=\\*\\*|$)",
+            re.DOTALL
+        ),
+        # 格式2: 【学科名】 后面的内容
+        re.compile(
+            f"【{re.escape(subject)}】\\s*\\n?([^【]+?)(?=【|$)",
+            re.DOTALL
+        ),
+        # 格式3: 学科名： 后面的内容（冒号格式）
+        re.compile(
+            f"{re.escape(subject)}：\\s*\\n?([^\\n]+?)(?=\\n\\s*[^\\s]|$)",
+            re.DOTALL
+        ),
+        # 格式4: 学科名: 后面的内容（英文冒号）
+        re.compile(
+            f"{re.escape(subject)}:\\s*\\n?([^\\n]+?)(?=\\n\\s*[^\\s]|$)",
+            re.DOTALL
+        ),
+    ]
     
-    if match and match.group(1):
-        return match.group(1).strip()
+    for pattern in patterns:
+        match = pattern.search(tip)
+        if match and match.group(1):
+            content = match.group(1).strip()
+            if content:  # 确保内容不为空
+                return content
+    
+    # 如果所有模式都不匹配，尝试直接搜索学科名，返回包含该学科名的段落
+    lines = tip.split('\n')
+    in_subject_section = False
+    result_lines = []
+    
+    for line in lines:
+        # 检查是否包含学科名
+        if subject in line:
+            in_subject_section = True
+            # 提取该行中学科名后面的内容
+            idx = line.find(subject)
+            if idx != -1:
+                remaining = line[idx + len(subject):].strip()
+                # 移除可能的标记符号
+                remaining = re.sub(r'^[：:【】\*\s]+', '', remaining)
+                if remaining:
+                    result_lines.append(remaining)
+        elif in_subject_section:
+            # 如果遇到空行或新的学科标记，停止收集
+            if line.strip() == '' or re.match(r'^[【\*]', line.strip()):
+                break
+            result_lines.append(line)
+    
+    if result_lines:
+        return '\n'.join(result_lines).strip()
     
     return ""
 
@@ -106,6 +153,8 @@ async def generate_student_status(
     
     # 收集所有学生的对应学科tip内容
     all_subject_contents = []
+    debug_info = []  # 用于调试
+    
     for student in students:
         sum_up = db.query(models.StudentSumUp).filter(
             models.StudentSumUp.student_id == student.student_id
@@ -115,9 +164,17 @@ async def generate_student_status(
             subject_content = extract_subject_content(sum_up.tip, teacher_subject)
             if subject_content:
                 all_subject_contents.append(f"{student.student_id}（{student.name or ''}）的{teacher_subject}学科情况：\n{subject_content}")
+            else:
+                # 记录调试信息：为什么没有提取到内容
+                debug_info.append(f"学生 {student.student_id} ({student.name}) 的 tip 存在但无法提取 {teacher_subject} 学科内容。tip 前100字符: {sum_up.tip[:100]}")
+        else:
+            debug_info.append(f"学生 {student.student_id} ({student.name}) 没有 StudentSumUp 数据")
     
     if not all_subject_contents:
-        raise HTTPException(status_code=400, detail="No student data available for this subject")
+        error_msg = f"No student data available for this subject ({teacher_subject})"
+        if debug_info:
+            error_msg += f". Debug info: {'; '.join(debug_info)}"
+        raise HTTPException(status_code=400, detail=error_msg)
     
     # 整合所有内容，发送给LLM
     combined_content = "\n\n".join(all_subject_contents)
