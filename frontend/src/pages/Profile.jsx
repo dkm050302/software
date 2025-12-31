@@ -28,6 +28,11 @@ export default function Profile() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({});
   const [editLoading, setEditLoading] = useState(false);
+  const [passwordFormData, setPasswordFormData] = useState({
+    old_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
 
   useEffect(() => {
     fetchProfile();
@@ -55,6 +60,11 @@ export default function Profile() {
 
   const handleEditClick = () => {
     setEditFormData({ ...profile });
+    setPasswordFormData({
+      old_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
     setEditDialogOpen(true);
     setError("");
   };
@@ -62,12 +72,42 @@ export default function Profile() {
   const handleEditClose = () => {
     setEditDialogOpen(false);
     setEditFormData({});
+    setPasswordFormData({
+      old_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
     setError("");
   };
 
   const handleEditSubmit = async () => {
     setEditLoading(true);
     setError("");
+    
+    // 验证密码修改（如果填写了密码字段）
+    if (passwordFormData.new_password || passwordFormData.old_password || passwordFormData.confirm_password) {
+      if (!passwordFormData.old_password) {
+        setError("请输入旧密码");
+        setEditLoading(false);
+        return;
+      }
+      if (!passwordFormData.new_password) {
+        setError("请输入新密码");
+        setEditLoading(false);
+        return;
+      }
+      if (passwordFormData.new_password !== passwordFormData.confirm_password) {
+        setError("两次输入的密码不一致");
+        setEditLoading(false);
+        return;
+      }
+      if (passwordFormData.new_password.length < 6) {
+        setError("密码长度至少6位");
+        setEditLoading(false);
+        return;
+      }
+    }
+    
     try {
       // 根据用户类型构建更新数据（排除id属性）
       const updateData = {};
@@ -101,11 +141,28 @@ export default function Profile() {
         }
       }
 
-      const response = await api.put("/auth/profile", updateData);
-      setProfile(response.data);
+      // 更新个人信息
+      if (Object.keys(updateData).length > 0) {
+        const response = await api.put("/auth/profile", updateData);
+        setProfile(response.data);
+      }
+      
+      // 修改密码（如果填写了密码字段）
+      if (passwordFormData.new_password && passwordFormData.old_password) {
+        await api.put("/auth/change-password", {
+          old_password: passwordFormData.old_password,
+          new_password: passwordFormData.new_password,
+        });
+      }
+      
       handleEditClose();
+      if (passwordFormData.new_password) {
+        alert("信息更新成功，密码已修改");
+      } else {
+        alert("信息更新成功");
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "更新个人信息失败");
+      setError(err.response?.data?.detail || "更新失败");
     } finally {
       setEditLoading(false);
     }
@@ -381,6 +438,7 @@ export default function Profile() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                mb: 2,
               }}
             >
               <Typography variant="h6">账户操作</Typography>
@@ -407,6 +465,57 @@ export default function Profile() {
             </Alert>
           )}
           {renderEditForm()}
+          
+          {/* 密码修改部分 */}
+          <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="subtitle1" gutterBottom>
+              修改密码（可选）
+            </Typography>
+            <TextField
+              margin="normal"
+              fullWidth
+              name="old_password"
+              label="旧密码"
+              type="password"
+              id="old_password"
+              value={passwordFormData.old_password}
+              onChange={(e) =>
+                setPasswordFormData({ ...passwordFormData, old_password: e.target.value })
+              }
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              name="new_password"
+              label="新密码"
+              type="password"
+              id="new_password"
+              value={passwordFormData.new_password}
+              onChange={(e) =>
+                setPasswordFormData({ ...passwordFormData, new_password: e.target.value })
+              }
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              name="confirm_password"
+              label="确认新密码"
+              type="password"
+              id="confirm_password"
+              value={passwordFormData.confirm_password}
+              onChange={(e) =>
+                setPasswordFormData({ ...passwordFormData, confirm_password: e.target.value })
+              }
+              error={passwordFormData.new_password !== passwordFormData.confirm_password && passwordFormData.confirm_password !== ""}
+              helperText={
+                passwordFormData.new_password !== passwordFormData.confirm_password && passwordFormData.confirm_password !== ""
+                  ? "两次输入的密码不一致"
+                  : passwordFormData.new_password && passwordFormData.new_password.length < 6
+                  ? "密码长度至少6位"
+                  : ""
+              }
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleEditClose}>取消</Button>

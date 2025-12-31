@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import Optional
+from pydantic import BaseModel
 from app import database, models, schemas, auth_utils, config
 from app.dependencies import get_db, get_current_user
 import os
@@ -583,6 +584,30 @@ def update_profile(
         }
     else:
         raise HTTPException(status_code=400, detail="Unknown user type")
+
+class PasswordChangeRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+@router.put("/change-password")
+def change_password(
+    password_data: PasswordChangeRequest,
+    current_user_data: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """修改密码"""
+    user = current_user_data["user"]
+    
+    # 验证旧密码
+    if not auth_utils.verify_password(password_data.old_password, user.password):
+        raise HTTPException(status_code=400, detail="旧密码不正确")
+    
+    # 更新密码
+    hashed_password = auth_utils.get_password_hash(password_data.new_password)
+    user.password = hashed_password
+    db.commit()
+    
+    return {"message": "密码修改成功"}
 
 # ========== 刷新Token接口 ==========
 

@@ -23,7 +23,7 @@ import {
   CircularProgress,
   TextField,
 } from "@mui/material";
-import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
+import { Delete as DeleteIcon, Add as AddIcon, Download as DownloadIcon, Upload as UploadIcon } from "@mui/icons-material";
 import api from "../services/api";
 
 function TabPanel({ children, value, index }) {
@@ -60,6 +60,12 @@ export default function Admin() {
     // 教师注册
     email: "",
     subject: "",
+  });
+  const [importDialog, setImportDialog] = useState({
+    open: false,
+    file: null,
+    loading: false,
+    result: null,
   });
 
   useEffect(() => {
@@ -177,12 +183,79 @@ export default function Admin() {
     }
   };
 
+  const handleExportTemplate = async () => {
+    try {
+      const response = await api.get("/admin/export-template", {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "import_template.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.detail || "导出模板失败");
+    }
+  };
+
+  const handleImportFile = async () => {
+    if (!importDialog.file) {
+      setError("请选择文件");
+      return;
+    }
+
+    setImportDialog({ ...importDialog, loading: true });
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", importDialog.file);
+
+      const response = await api.post("/admin/import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setImportDialog({
+        open: true,
+        file: importDialog.file,
+        loading: false,
+        result: response.data,
+      });
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.detail || "导入失败");
+      setImportDialog({ ...importDialog, loading: false });
+    }
+  };
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          管理员界面
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography variant="h4" component="h1">
+            管理员界面
+          </Typography>
+          <Box>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleExportTemplate}
+              sx={{ mr: 1 }}
+            >
+              导出模板
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<UploadIcon />}
+              onClick={() => setImportDialog({ open: true, file: null, loading: false, result: null })}
+            >
+              导入
+            </Button>
+          </Box>
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
@@ -560,6 +633,91 @@ export default function Admin() {
           <Button onClick={handleRegisterSubmit} variant="contained" autoFocus>
             注册
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 导入对话框 */}
+      <Dialog open={importDialog.open} onClose={() => setImportDialog({ open: false, file: null, loading: false, result: null })} maxWidth="md" fullWidth>
+        <DialogTitle>导入数据</DialogTitle>
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+              {error}
+            </Alert>
+          )}
+          {importDialog.result && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>导入完成</Typography>
+              <Typography variant="body2">
+                学生：成功 {importDialog.result.results.students.success}，失败 {importDialog.result.results.students.failed}
+              </Typography>
+              <Typography variant="body2">
+                教师：成功 {importDialog.result.results.teachers.success}，失败 {importDialog.result.results.teachers.failed}
+              </Typography>
+              <Typography variant="body2">
+                家长：成功 {importDialog.result.results.parents.success}，失败 {importDialog.result.results.parents.failed}
+              </Typography>
+              {importDialog.result.results.students.errors.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="error">
+                    学生错误：{importDialog.result.results.students.errors.slice(0, 5).join("; ")}
+                    {importDialog.result.results.students.errors.length > 5 && "..."}
+                  </Typography>
+                </Box>
+              )}
+              {importDialog.result.results.teachers.errors.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="error">
+                    教师错误：{importDialog.result.results.teachers.errors.slice(0, 5).join("; ")}
+                    {importDialog.result.results.teachers.errors.length > 5 && "..."}
+                  </Typography>
+                </Box>
+              )}
+              {importDialog.result.results.parents.errors.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="error">
+                    家长错误：{importDialog.result.results.parents.errors.slice(0, 5).join("; ")}
+                    {importDialog.result.results.parents.errors.length > 5 && "..."}
+                  </Typography>
+                </Box>
+              )}
+            </Alert>
+          )}
+          <input
+            accept=".xlsx,.xls"
+            style={{ display: "none" }}
+            id="import-file-input"
+            type="file"
+            onChange={(e) => {
+              setImportDialog({
+                ...importDialog,
+                file: e.target.files[0],
+                result: null,
+              });
+            }}
+          />
+          <label htmlFor="import-file-input">
+            <Button variant="outlined" component="span" fullWidth sx={{ mb: 2 }}>
+              {importDialog.file ? importDialog.file.name : "选择Excel文件"}
+            </Button>
+          </label>
+          <Typography variant="body2" color="text.secondary">
+            请选择包含"学生"、"教师"、"家长"三个sheet的Excel文件
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setImportDialog({ open: false, file: null, loading: false, result: null })}>
+            {importDialog.result ? "关闭" : "取消"}
+          </Button>
+          {!importDialog.result && (
+            <Button
+              onClick={handleImportFile}
+              variant="contained"
+              disabled={!importDialog.file || importDialog.loading}
+            >
+              {importDialog.loading ? "导入中..." : "导入"}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Container>
