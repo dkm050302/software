@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   Grid, Paper, Typography, Box, CircularProgress, Button, 
   Select, MenuItem, FormControl, InputLabel
@@ -8,6 +8,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -16,6 +18,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [subjects, setSubjects] = useState(['General']);
+  const reportRef = useRef(null);
 
   useEffect(() => {
     fetchData();
@@ -63,15 +66,81 @@ export default function Dashboard() {
     }
   };
 
-  const handleConfirm = async () => {
-    // "Confirm button is only reading tip not analyzing, if corresponding subject has no report, then analyze"
-    if (reportData[selectedSubject]) {
-        // Already have it, do nothing (it's already displayed)
-        return;
+  const handleRefresh = async () => {
+    setAnalyzing(true);
+    try {
+      const res = await api.get('/dashboard/weekly-reports');
+      setReportData(res.data || {});
+    } catch (error) {
+      console.error("Error refreshing reports:", error);
+      alert('Failed to refresh reports.');
+    } finally {
+      setAnalyzing(false);
     }
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!reportRef.current) return;
     
-    // If not present, trigger analysis
-    await handleAnalyze();
+    setAnalyzing(true);
+    try {
+      const element = reportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true, // Handle cross-origin images if any
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const ratio = pdfWidth / imgWidth;
+      const pdfImgHeight = imgHeight * ratio;
+      
+      let heightLeft = pdfImgHeight;
+      let position = 0;
+      
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfImgHeight);
+      heightLeft -= pdfHeight;
+      
+      // Add subsequent pages if content overflows
+      while (heightLeft > 0) {
+        position -= pdfHeight; // Move the image up for the next page
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfImgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      const pdfBlob = pdf.output('blob');
+      
+      // Upload to backend
+      const formData = new FormData();
+      formData.append('file', pdfBlob, 'report.pdf');
+      
+      const res = await api.post('/dashboard/upload-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      alert(`PDF generated and saved: ${res.data.filename}`);
+      
+      // Open in new tab
+      const fileURL = URL.createObjectURL(pdfBlob);
+      window.open(fileURL, '_blank');
+      
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert('Failed to generate PDF.');
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   if (loading) {
@@ -112,14 +181,24 @@ export default function Dashboard() {
           <Button 
             variant="outlined" 
             color="secondary" 
-            onClick={handleConfirm}
+            onClick={handleRefresh}
             disabled={analyzing}
           >
-            Confirm / View
+            Refresh
+          </Button>
+
+          <Button 
+            variant="contained" 
+            color="success" 
+            onClick={handleGeneratePDF}
+            disabled={analyzing}
+          >
+            Generate PDF
           </Button>
         </Box>
 
         <Paper variant="outlined" sx={{ p: 2, minHeight: 300, maxHeight: 600, overflow: 'auto', bgcolor: '#f5f5f5' }}>
+            <div ref={reportRef} style={{ padding: '20px', backgroundColor: 'white' }}>
             {reportData[selectedSubject] ? (
                 <ReactMarkdown 
                     remarkPlugins={[remarkMath]} 
@@ -132,6 +211,7 @@ export default function Dashboard() {
                     No report available for {selectedSubject}. Click "Confirm" or "Analyze" to generate.
                 </Typography>
             )}
+            </div>
         </Paper>
       </Paper>
     </Box>

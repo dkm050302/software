@@ -1,0 +1,242 @@
+[
+  {
+    "id": 1,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "核心词汇：课程、活动、评价相关词汇"
+  },
+  {
+    "id": 2,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "重点短语：take part in / be in charge of / sign up for"
+  },
+  {
+    "id": 3,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "语法：一般现在时 vs 现在进行时（使用场景对比）"
+  },
+  {
+    "id": 4,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "写作：描述校园活动的邮件/通知（格式与常用句式）"
+  },
+  {
+    "id": 5,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "阅读：主旨大意题与细节定位（段落首尾句抓主旨）"
+  },
+  {
+    "id": 6,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "核心词汇：情绪、关系、沟通方式相关词汇"
+  },
+  {
+    "id": 7,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "重点句型：It is…that… 强调句的基本结构"
+  },
+  {
+    "id": 8,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "语法：定语从句（关系代词 who/which/that 的选择）"
+  },
+  {
+    "id": 9,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "语法：定语从句（关系副词 where/when/why 的使用）"
+  },
+  {
+    "id": 10,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "写作：表达建议与道歉（建议句型/礼貌表达）"
+  },
+  {
+    "id": 11,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "核心词汇：发明、互联网、人工智能相关词汇"
+  },
+  {
+    "id": 12,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "语法：被动语态（一般现在/一般过去/一般将来）"
+  },
+  {
+    "id": 13,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "语法：被动语态常见错误：be 动词缺失、时态不一致"
+  },
+  {
+    "id": 14,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "阅读：推理判断题（依据原文信息做合理推断）"
+  },
+  {
+    "id": 15,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "写作：说明文段落（定义—特点—例子—影响）"
+  },
+  {
+    "id": 16,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "核心词汇：节日、习俗、文化差异相关词汇"
+  },
+  {
+    "id": 17,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "语法：非谓语动词—动词不定式作目的状语（to do）"
+  },
+  {
+    "id": 18,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "语法：非谓语动词—动名词作主语/宾语（doing）"
+  },
+  {
+    "id": 19,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "完形：词汇复现与逻辑连接（转折/因果/并列）"
+  },
+  {
+    "id": 20,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "写作：对比中西文化（对比结构 on the one hand…）"
+  },
+  {
+    "id": 21,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "核心词汇：环保、能源、气候相关词汇"
+  },
+  {
+    "id": 22,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "语法：情态动词（can/must/should/may）表达推测与建议"
+  },
+  {
+    "id": 23,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "语法：虚拟语气入门（If I were… / If I had…）"
+  },
+  {
+    "id": 24,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "阅读：词义猜测题（上下文+同义替换+构词法）"
+  },
+  {
+    "id": 25,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "写作：倡议书（问题—措施—号召）"
+  },
+  {
+    "id": 26,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "核心词汇：饮食、运动、心理健康相关词汇"
+  },
+  {
+    "id": 27,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "语法：名词性从句—宾语从句（that/whether/疑问词）"
+  },
+  {
+    "id": 28,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "语法：名词性从句—主语从句（It 作形式主语）"
+  },
+  {
+    "id": 29,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "阅读：篇章结构题（总分/并列/对比/递进）"
+  },
+  {
+    "id": 30,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "写作：议论文基础（观点—论据—结论）"
+  },
+  {
+    "id": 31,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "阅读：定位关键词与同义替换（题干词↔原文词）"
+  },
+  {
+    "id": 32,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "阅读：长难句处理（先找主干，再补修饰）"
+  },
+  {
+    "id": 33,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "完形：逻辑连接词（however/therefore/moreover 等）"
+  },
+  {
+    "id": 34,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "语法填空：谓语动词三要素（时态/语态/主谓一致）"
+  },
+  {
+    "id": 35,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "语法填空：非谓语判断（看是否缺谓语/看逻辑主语）"
+  },
+  {
+    "id": 36,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "写作：高级连接词与句式升级（倒装/强调/从句）"
+  },
+  {
+    "id": 37,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "写作：避免中式英语（固定搭配与常见错误）"
+  },
+  {
+    "id": 38,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "听力：关键信息抓取（时间、地点、人物、数字）"
+  },
+  {
+    "id": 39,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "词汇：构词法（前缀/后缀/词根）辅助记忆"
+  },
+  {
+    "id": 40,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "词汇：同义词辨析（say/speak/tell/talk 等）"
+  }
+]

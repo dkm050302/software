@@ -1,14 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import json
 import os
 import asyncio
+import shutil
 from .. import models, schemas
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..services.llm_service import llm_service
 from ..services.local_storage import local_storage
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 router = APIRouter()
 
@@ -149,43 +156,52 @@ async def analyze_weekly_report(
             models.LearningMistake.student_id == user.student_id,
             models.LearningMistake.date >= start_week
         ).all()
-        notes = db.query(models.Note).filter(
-            models.Note.student_id == user.student_id,
-            models.Note.date >= start_week
-        ).all()
+        # notes = db.query(models.Note).filter(
+        #     models.Note.student_id == user.student_id,
+        #     models.Note.date >= start_week
+        # ).all()
         
-        all_subjects = set([m.subject for m in mistakes if m.subject] + [n.subject for n in notes if n.subject])
+        all_subjects = set([m.subject for m in mistakes if m.subject])
         subjects_to_analyze = list(all_subjects)
         if "General" not in subjects_to_analyze:
             subjects_to_analyze.append("General")
 
     # 3. Process each subject
-    updated_reports = {}
     
-    # Load existing reports from DB if available to merge
+    # Load existing StudentTip from DB
     existing_tip_entry = db.query(models.StudentTip).filter(
         models.StudentTip.student_id == user.student_id,
         models.StudentTip.time >= start_week
     ).first()
     
+    student_tip_dict = {}
     if existing_tip_entry and existing_tip_entry.tip:
         try:
-            updated_reports = json.loads(existing_tip_entry.tip)
+            student_tip_dict = json.loads(existing_tip_entry.tip)
         except:
             pass
 
-    # 用于 StudentSumUp 的数据收集
-    sum_up_data = {}
+    # Load existing StudentSumUp from DB
+    existing_sum_up_entry = db.query(models.StudentSumUp).filter(
+        models.StudentSumUp.student_id == user.student_id,
+        models.StudentSumUp.time >= start_week
+    ).first()
+
+    student_sum_up_dict = {}
+    if existing_sum_up_entry and existing_sum_up_entry.tip:
+        try:
+            student_sum_up_dict = json.loads(existing_sum_up_entry.tip)
+        except:
+            pass
     
-    # 存储 LLM 任务
-    tasks = []
+    # Store LLM tasks
+    tasks_analysis = []
+    tasks_sumup = []
     task_subjects = []
 
     for sub in subjects_to_analyze:
         # Collect data for this subject
         sub_data = {"mistakes": [], "notes": []}
-        
-        # 收集用于 SumUp 的错题 tip 列表
         mistake_tips_for_sumup = []
 
         if sub == "General":
@@ -194,20 +210,11 @@ async def analyze_weekly_report(
                 models.LearningMistake.student_id == user.student_id,
                 models.LearningMistake.date >= start_week
             ).all()
-            notes = db.query(models.Note).filter(
-                models.Note.student_id == user.student_id,
-                models.Note.date >= start_week
-            ).all()
         else:
             mistakes = db.query(models.LearningMistake).filter(
                 models.LearningMistake.student_id == user.student_id,
                 models.LearningMistake.date >= start_week,
                 models.LearningMistake.subject == sub
-            ).all()
-            notes = db.query(models.Note).filter(
-                models.Note.student_id == user.student_id,
-                models.Note.date >= start_week,
-                models.Note.subject == sub
             ).all()
 
         for m in mistakes:
@@ -216,38 +223,30 @@ async def analyze_weekly_report(
                 "knowledge_point": m.knowledge_point,
                 "tip": m.tip
             })
-            # 收集 tip 用于 SumUp
             if m.tip:
                 mistake_tips_for_sumup.append(m.tip)
-
-        for n in notes:
-            sub_data["notes"].append({
-                "content": n.content if n.content else "无内容",
-                "knowledge_point": n.knowledge_point,
-                "tip": n.tip
-            })
             
-        # Update JSON file data
+        # Update JSON file data structure (for local file)
         full_data[sub] = sub_data
         
-        # Create LLM task (do not await here)
-        tasks.append(llm_service.generate_weekly_analysis(sub_data, sub))
+        # Create LLM tasks
+        tasks_analysis.append(llm_service.generate_weekly_analysis(sub_data, sub))
+        tasks_sumup.append(llm_service.generate_weekly_summary_from_tips(mistake_tips_for_sumup, sub))
         task_subjects.append(sub)
 
-        # 收集 SumUp 数据 (按学科分段)
-        if sub != "General" and mistake_tips_for_sumup:
-             sum_up_data[sub] = mistake_tips_for_sumup
-
-    # 并行执行所有 LLM 任务
-    if tasks:
-        llm_results = await asyncio.gather(*tasks)
+    # Execute all LLM tasks
+    new_generated_sumup = {}
+    if tasks_analysis:
+        results_analysis = await asyncio.gather(*tasks_analysis)
+        results_sumup = await asyncio.gather(*tasks_sumup)
         
-        # 将结果填回 updated_reports
-        for i, result in enumerate(llm_results):
-            sub_name = task_subjects[i]
-            updated_reports[sub_name] = result
+        # Update dictionaries
+        for i, sub in enumerate(task_subjects):
+            student_tip_dict[sub] = results_analysis[i]
+            student_sum_up_dict[sub] = results_sumup[i]
+            new_generated_sumup[sub] = results_sumup[i]
 
-    # 4. Save JSON file
+    # 4. Save JSON file (Local Report)
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(full_data, f, ensure_ascii=False, indent=2)
 
@@ -261,43 +260,189 @@ async def analyze_weekly_report(
     except Exception as e:
         print(f"Error saving weekly report to local storage: {e}")
 
-    # 5. Save to DB
+    # 5. Save StudentTip to DB
     if existing_tip_entry:
-        existing_tip_entry.tip = json.dumps(updated_reports, ensure_ascii=False)
+        existing_tip_entry.tip = json.dumps(student_tip_dict, ensure_ascii=False)
         existing_tip_entry.time = datetime.now() 
     else:
         new_tip = models.StudentTip(
             student_id=user.student_id,
-            tip=json.dumps(updated_reports, ensure_ascii=False),
+            tip=json.dumps(student_tip_dict, ensure_ascii=False),
             time=datetime.now()
         )
         db.add(new_tip)
     
-    # 6. Process StudentSumUp (New Logic)
-    if sum_up_data:
-        sum_up_prompt_content = "请根据以下各学科的错题提示(Tips)，统计当前学生的错题情况。输出格式要求：每个学科一段，描述有多少错题，主要涉及哪些知识点。\n\n"
-        for s_sub, s_tips in sum_up_data.items():
-            sum_up_prompt_content += f"【{s_sub}】:\n" + "\n".join(s_tips) + "\n\n"
-        
-        sum_up_result = await llm_service.generate_simple_chat(sum_up_prompt_content) 
-        
-        # Save to DB (StudentSumUp)
-        existing_sum_up = db.query(models.StudentSumUp).filter(
-            models.StudentSumUp.student_id == user.student_id,
-            models.StudentSumUp.time >= start_week
-        ).first()
+    # 6. Save StudentSumUp to DB (Optimized for Concurrency)
+    # Lock all existing records for this student to prevent race conditions
+    existing_sum_up_rows = db.query(models.StudentSumUp).filter(
+        models.StudentSumUp.student_id == user.student_id
+    ).with_for_update().all()
 
-        if existing_sum_up:
-            existing_sum_up.tip = sum_up_result
-            existing_sum_up.time = datetime.now()
-        else:
-            new_sum_up = models.StudentSumUp(
-                student_id=user.student_id,
-                tip=sum_up_result,
-                time=datetime.now()
-            )
-            db.add(new_sum_up)
+    # Get the latest data from DB (in case it changed while we were generating LLM)
+    current_db_sum_up_dict = {}
+    if existing_sum_up_rows:
+        # Sort to find the latest if multiple exist
+        latest_row = sorted(existing_sum_up_rows, key=lambda x: x.time, reverse=True)[0]
+        if latest_row.tip:
+            try:
+                current_db_sum_up_dict = json.loads(latest_row.tip)
+            except:
+                pass
+    
+    # Merge the NEWLY generated results into the FRESH DB data
+    if new_generated_sumup:
+        current_db_sum_up_dict.update(new_generated_sumup)
+
+    # Delete all existing records
+    for row in existing_sum_up_rows:
+        db.delete(row)
+    
+    # Insert the consolidated record
+    new_sum_up = models.StudentSumUp(
+        student_id=user.student_id,
+        tip=json.dumps(current_db_sum_up_dict, ensure_ascii=False),
+        time=datetime.now()
+    )
+    db.add(new_sum_up)
 
     db.commit()
     
-    return updated_reports
+    return {"status": "success", "report": student_tip_dict}
+
+@router.post("/upload-pdf")
+async def upload_pdf(
+    file: UploadFile = File(...),
+    current_user_data: dict = Depends(get_current_user)
+):
+    user = current_user_data["user"]
+    if current_user_data["user_type"] != "student":
+         raise HTTPException(status_code=403, detail="Only students can upload PDFs")
+
+    # Prepare PDF Directory
+    pdf_dir = os.path.join("data", "reports")
+    if not os.path.exists(pdf_dir):
+        os.makedirs(pdf_dir)
+        
+    # Use current date as filename
+    date_str = datetime.now().strftime("%Y%m%d")
+    filename = f"{date_str}.pdf"
+    file_path = os.path.join(pdf_dir, filename)
+    
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        return {"message": "PDF uploaded successfully", "path": file_path, "filename": filename}
+    except Exception as e:
+        print(f"Error saving PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save PDF: {str(e)}")
+
+@router.post("/generate-pdf")
+async def generate_pdf(
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    user = current_user_data["user"]
+    if current_user_data["user_type"] != "student":
+         raise HTTPException(status_code=403, detail="Only students can generate PDFs")
+
+    # 1. Get Report Data
+    start_week, end_week = get_week_range()
+    latest_tip = db.query(models.StudentTip).filter(
+        models.StudentTip.student_id == user.student_id,
+        models.StudentTip.time >= start_week
+    ).order_by(models.StudentTip.time.desc()).first()
+
+    if not latest_tip or not latest_tip.tip:
+        raise HTTPException(status_code=404, detail="No report found for this week")
+
+    try:
+        report_data = json.loads(latest_tip.tip)
+    except:
+        raise HTTPException(status_code=500, detail="Invalid report data")
+
+    # 2. Prepare PDF Directory
+    # Use data/reports as requested (or data_cache/weekly_reports if preferred, but user said "data文件夹相应的地方")
+    # Let's use data/reports to be clean
+    pdf_dir = os.path.join("data", "reports")
+    if not os.path.exists(pdf_dir):
+        os.makedirs(pdf_dir)
+        
+    date_str = datetime.now().strftime("%Y%m%d")
+    filename = f"{date_str}.pdf"
+    file_path = os.path.join(pdf_dir, filename)
+    
+    # 3. Generate PDF
+    try:
+        # Register Chinese Font
+        # Try common Windows font paths
+        font_path = "C:\\Windows\\Fonts\\simhei.ttf"
+        if os.path.exists(font_path):
+            pdfmetrics.registerFont(TTFont('SimHei', font_path))
+            font_name = 'SimHei'
+        else:
+            # Fallback or try another
+            font_name = 'Helvetica' # No Chinese support
+            print("Warning: SimHei font not found. Chinese characters may not render.")
+
+        doc = SimpleDocTemplate(file_path, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        # Create custom style for Chinese
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=12,
+            leading=14,
+            spaceAfter=10
+        )
+        
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontName=font_name,
+            fontSize=18,
+            leading=22,
+            spaceAfter=20,
+            alignment=1 # Center
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontName=font_name,
+            fontSize=14,
+            leading=18,
+            spaceAfter=12,
+            textColor=colors.blue
+        )
+
+        story = []
+        
+        # Title
+        story.append(Paragraph(f"周报 - {date_str}", title_style))
+        story.append(Spacer(1, 12))
+        
+        # Content
+        for subject, content in report_data.items():
+            story.append(Paragraph(subject, heading_style))
+            
+            # Simple Markdown cleanup for PDF
+            # Replace newlines with <br/>
+            # Remove ** for bold (or handle it if possible, but simple replacement is safer for now)
+            clean_content = content.replace("\n", "<br/>")
+            clean_content = clean_content.replace("**", "") # Remove bold markers
+            clean_content = clean_content.replace("#", "") # Remove headers
+            
+            story.append(Paragraph(clean_content, normal_style))
+            story.append(Spacer(1, 12))
+            
+        doc.build(story)
+        
+        return {"message": "PDF generated successfully", "path": file_path, "filename": filename}
+        
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
+

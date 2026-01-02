@@ -1,44 +1,1122 @@
 [
   {
     "id": 1,
-    "teacher_id": 4,
-    "subject": "数学",
-    "chapter": "第2章",
-    "knowledge_point": "alpha分布"
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "核心词汇：课程、活动、评价相关词汇"
   },
   {
     "id": 2,
-    "teacher_id": 4,
-    "subject": "数学",
-    "chapter": "第2章",
-    "knowledge_point": "检验"
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "重点短语：take part in / be in charge of / sign up for"
   },
   {
     "id": 3,
-    "teacher_id": 4,
-    "subject": "数学",
-    "chapter": "第3章",
-    "knowledge_point": "卡方分布"
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "语法：一般现在时 vs 现在进行时（使用场景对比）"
   },
   {
     "id": 4,
-    "teacher_id": 4,
-    "subject": "数学",
-    "chapter": "第1章",
-    "knowledge_point": "方差"
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "写作：描述校园活动的邮件/通知（格式与常用句式）"
   },
   {
     "id": 5,
-    "teacher_id": 4,
-    "subject": "数学",
-    "chapter": "第1章",
-    "knowledge_point": "等比数列"
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 1 School Life & Learning",
+    "knowledge_point": "阅读：主旨大意题与细节定位（段落首尾句抓主旨）"
   },
   {
     "id": 6,
-    "teacher_id": 5,
+    "teacher_id": 2,
     "subject": "英语",
-    "chapter": "第1章",
-    "knowledge_point": "宾语从句"
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "核心词汇：情绪、关系、沟通方式相关词汇"
+  },
+  {
+    "id": 7,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "重点句型：It is…that… 强调句的基本结构"
+  },
+  {
+    "id": 8,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "语法：定语从句（关系代词 who/which/that 的选择）"
+  },
+  {
+    "id": 9,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "语法：定语从句（关系副词 where/when/why 的使用）"
+  },
+  {
+    "id": 10,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 2 Friendship & Communication",
+    "knowledge_point": "写作：表达建议与道歉（建议句型/礼貌表达）"
+  },
+  {
+    "id": 11,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "核心词汇：发明、互联网、人工智能相关词汇"
+  },
+  {
+    "id": 12,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "语法：被动语态（一般现在/一般过去/一般将来）"
+  },
+  {
+    "id": 13,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "语法：被动语态常见错误：be 动词缺失、时态不一致"
+  },
+  {
+    "id": 14,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "阅读：推理判断题（依据原文信息做合理推断）"
+  },
+  {
+    "id": 15,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 3 Science & Technology",
+    "knowledge_point": "写作：说明文段落（定义—特点—例子—影响）"
+  },
+  {
+    "id": 16,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "核心词汇：节日、习俗、文化差异相关词汇"
+  },
+  {
+    "id": 17,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "语法：非谓语动词—动词不定式作目的状语（to do）"
+  },
+  {
+    "id": 18,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "语法：非谓语动词—动名词作主语/宾语（doing）"
+  },
+  {
+    "id": 19,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "完形：词汇复现与逻辑连接（转折/因果/并列）"
+  },
+  {
+    "id": 20,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 4 Culture & Traditions",
+    "knowledge_point": "写作：对比中西文化（对比结构 on the one hand…）"
+  },
+  {
+    "id": 21,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "核心词汇：环保、能源、气候相关词汇"
+  },
+  {
+    "id": 22,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "语法：情态动词（can/must/should/may）表达推测与建议"
+  },
+  {
+    "id": 23,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "语法：虚拟语气入门（If I were… / If I had…）"
+  },
+  {
+    "id": 24,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "阅读：词义猜测题（上下文+同义替换+构词法）"
+  },
+  {
+    "id": 25,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 5 Environment & Sustainability",
+    "knowledge_point": "写作：倡议书（问题—措施—号召）"
+  },
+  {
+    "id": 26,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "核心词汇：饮食、运动、心理健康相关词汇"
+  },
+  {
+    "id": 27,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "语法：名词性从句—宾语从句（that/whether/疑问词）"
+  },
+  {
+    "id": 28,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "语法：名词性从句—主语从句（It 作形式主语）"
+  },
+  {
+    "id": 29,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "阅读：篇章结构题（总分/并列/对比/递进）"
+  },
+  {
+    "id": 30,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "Unit 6 Health & Lifestyle",
+    "knowledge_point": "写作：议论文基础（观点—论据—结论）"
+  },
+  {
+    "id": 31,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "阅读：定位关键词与同义替换（题干词↔原文词）"
+  },
+  {
+    "id": 32,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "阅读：长难句处理（先找主干，再补修饰）"
+  },
+  {
+    "id": 33,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "完形：逻辑连接词（however/therefore/moreover 等）"
+  },
+  {
+    "id": 34,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "语法填空：谓语动词三要素（时态/语态/主谓一致）"
+  },
+  {
+    "id": 35,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "语法填空：非谓语判断（看是否缺谓语/看逻辑主语）"
+  },
+  {
+    "id": 36,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "写作：高级连接词与句式升级（倒装/强调/从句）"
+  },
+  {
+    "id": 37,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "写作：避免中式英语（固定搭配与常见错误）"
+  },
+  {
+    "id": 38,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "听力：关键信息抓取（时间、地点、人物、数字）"
+  },
+  {
+    "id": 39,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "词汇：构词法（前缀/后缀/词根）辅助记忆"
+  },
+  {
+    "id": 40,
+    "teacher_id": 2,
+    "subject": "英语",
+    "chapter": "考试能力模块",
+    "knowledge_point": "词汇：同义词辨析（say/speak/tell/talk 等）"
+  },
+  {
+    "id": 41,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "集合的含义与表示"
+  },
+  {
+    "id": 42,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "元素与集合的关系（∈，∉）"
+  },
+  {
+    "id": 43,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "集合的分类：有限集、无限集、空集"
+  },
+  {
+    "id": 44,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "集合的表示方法：列举法、描述法、Venn图"
+  },
+  {
+    "id": 45,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "子集与真子集，集合相等的判定"
+  },
+  {
+    "id": 46,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "交集、并集、补集的概念与运算"
+  },
+  {
+    "id": 47,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "集合运算律：交换律、结合律、分配律、德摩根律"
+  },
+  {
+    "id": 48,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "命题的概念与真假判断"
+  },
+  {
+    "id": 49,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "充分条件与必要条件"
+  },
+  {
+    "id": 50,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "全称量词与存在量词（∀，∃）及否定"
+  },
+  {
+    "id": 51,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第一章 集合与常用逻辑用语",
+    "knowledge_point": "反例思想：否定全称命题的方法"
+  },
+  {
+    "id": 52,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "函数的概念：对应关系、定义域、值域"
+  },
+  {
+    "id": 53,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "函数的表示：解析式、图像、表格"
+  },
+  {
+    "id": 54,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "分段函数的定义域与图像"
+  },
+  {
+    "id": 55,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "函数的单调性：定义、判定、求单调区间"
+  },
+  {
+    "id": 56,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "函数的奇偶性：定义、图像特征、判定"
+  },
+  {
+    "id": 57,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "周期性函数：周期的理解与求法"
+  },
+  {
+    "id": 58,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "复合函数的定义域求法（由内到外）"
+  },
+  {
+    "id": 59,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "反函数：存在条件、求法、图像对称性"
+  },
+  {
+    "id": 60,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "函数图像变换：平移、伸缩、对称、翻折"
+  },
+  {
+    "id": 61,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第二章 函数基础与性质",
+    "knowledge_point": "常见函数图像：一次、二次、指数、对数、幂函数（性质对比）"
+  },
+  {
+    "id": 62,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "导数的概念：瞬时变化率与切线斜率"
+  },
+  {
+    "id": 63,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "导数的定义式与基本求导（f'(x)=lim）"
+  },
+  {
+    "id": 64,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "基本求导公式：x^n、e^x、ln x、sin x、cos x（常用）"
+  },
+  {
+    "id": 65,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "求导法则：和差法则、积的求导、商的求导"
+  },
+  {
+    "id": 66,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "复合函数求导：链式法则（常用套路）"
+  },
+  {
+    "id": 67,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "切线方程与法线方程（点斜式）"
+  },
+  {
+    "id": 68,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "利用导数判定单调性（f'(x)>0/<0）"
+  },
+  {
+    "id": 69,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "极值点与极值：一阶导数判别法"
+  },
+  {
+    "id": 70,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "最值问题：区间最值=端点值与极值比较"
+  },
+  {
+    "id": 71,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第三章 导数与应用",
+    "knowledge_point": "简单优化应用：面积/利润/成本等模型建立与求最优"
+  },
+  {
+    "id": 72,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "数列的概念：通项、前n项和、递推关系"
+  },
+  {
+    "id": 73,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "等差数列：定义、通项公式、前n项和公式"
+  },
+  {
+    "id": 74,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "等比数列：定义、通项公式、前n项和公式"
+  },
+  {
+    "id": 75,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "等差与等比的判定：差/比是否为常数"
+  },
+  {
+    "id": 76,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "递推数列求通项：差分/构造/待定系数（常见题型）"
+  },
+  {
+    "id": 77,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "数列求和方法：裂项相消、错位相减、分组求和"
+  },
+  {
+    "id": 78,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "Σ符号的含义与运算规则"
+  },
+  {
+    "id": 79,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "数学归纳法：步骤、适用范围、常见证明模板"
+  },
+  {
+    "id": 80,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第四章 数列",
+    "knowledge_point": "数列与不等式：放缩、单调性、均值不等式（基础应用）"
+  },
+  {
+    "id": 81,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "向量的概念：大小与方向，零向量、单位向量"
+  },
+  {
+    "id": 82,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "向量的加减法与三角形/平行四边形法则"
+  },
+  {
+    "id": 83,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "数乘向量与共线判定"
+  },
+  {
+    "id": 84,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "向量的坐标表示（基底、坐标）"
+  },
+  {
+    "id": 85,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "数量积（点积）：定义、几何意义、计算"
+  },
+  {
+    "id": 86,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "夹角公式与垂直判定（a·b=0）"
+  },
+  {
+    "id": 87,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第五章 平面向量",
+    "knowledge_point": "向量在几何中的应用：中点、平行、共线、面积表达"
+  },
+  {
+    "id": 88,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "空间点、线、面的基本关系与表示"
+  },
+  {
+    "id": 89,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "直线与平面的位置关系：平行、相交、异面"
+  },
+  {
+    "id": 90,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "平行判定与性质：线线、线面、面面"
+  },
+  {
+    "id": 91,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "垂直判定与性质：线线、线面、面面"
+  },
+  {
+    "id": 92,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "空间角：线线角、线面角、二面角的理解与求法"
+  },
+  {
+    "id": 93,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "空间距离：点到面、点到线、线线（常见模型）"
+  },
+  {
+    "id": 94,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第六章 立体几何初步",
+    "knowledge_point": "简单几何体体积与表面积：棱柱、棱锥、圆柱、圆锥、球（基础）"
+  },
+  {
+    "id": 95,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "平面直角坐标系与距离公式"
+  },
+  {
+    "id": 96,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "斜率、倾斜角与斜率存在条件"
+  },
+  {
+    "id": 97,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "直线方程：点斜式、两点式、一般式互化"
+  },
+  {
+    "id": 98,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "点到直线距离公式与应用"
+  },
+  {
+    "id": 99,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "两直线位置关系：平行、垂直、相交（条件判断）"
+  },
+  {
+    "id": 100,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "圆的标准方程与一般方程（配方）"
+  },
+  {
+    "id": 101,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第七章 解析几何：直线与圆",
+    "knowledge_point": "直线与圆的位置关系：判别式/距离法"
+  },
+  {
+    "id": 102,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "圆锥曲线统一定义：到焦点距离与到准线距离之比"
+  },
+  {
+    "id": 103,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "椭圆：标准方程、长短轴、焦点、离心率"
+  },
+  {
+    "id": 104,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "椭圆的几何性质：对称性、范围、顶点"
+  },
+  {
+    "id": 105,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "双曲线：标准方程、焦点、渐近线、离心率"
+  },
+  {
+    "id": 106,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "双曲线的几何性质：对称性、渐近线应用"
+  },
+  {
+    "id": 107,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "抛物线：标准方程、焦点、准线、参数p"
+  },
+  {
+    "id": 108,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "弦与切线：斜率法/导数法（基础）"
+  },
+  {
+    "id": 109,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第八章 圆锥曲线",
+    "knowledge_point": "直线与圆锥曲线的位置关系：判别式/联立方程"
+  },
+  {
+    "id": 110,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "计数原理：加法原理与乘法原理"
+  },
+  {
+    "id": 111,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "排列与组合：公式、区别与应用"
+  },
+  {
+    "id": 112,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "二项式定理与二项展开（基础应用）"
+  },
+  {
+    "id": 113,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "随机事件与概率：古典概型"
+  },
+  {
+    "id": 114,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "互斥事件与独立事件（概念与计算）"
+  },
+  {
+    "id": 115,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "条件概率与乘法公式（基础题型）"
+  },
+  {
+    "id": 116,
+    "teacher_id": 1,
+    "subject": "数学",
+    "chapter": "第九章 概率与统计基础",
+    "knowledge_point": "统计：样本、总体、均值、方差的意义（入门）"
+  },
+  {
+    "id": 117,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "参考系与位移：位移是矢量，路程是标量"
+  },
+  {
+    "id": 118,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "速度与速率：速度=位移/时间，方向随位移"
+  },
+  {
+    "id": 119,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "加速度：速度变化快慢与方向（不等于速度大小）"
+  },
+  {
+    "id": 120,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "x-t 图像：斜率表示速度，曲率反映速度变化"
+  },
+  {
+    "id": 121,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "v-t 图像：斜率表示加速度，面积表示位移"
+  },
+  {
+    "id": 122,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "匀加速/匀减速的判定：加速度恒定"
+  },
+  {
+    "id": 123,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "基本公式：v=v0+at（方向用正负号统一）"
+  },
+  {
+    "id": 124,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "位移公式：x=v0 t + 1/2 a t^2"
+  },
+  {
+    "id": 125,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "速度位移关系：v^2=v0^2+2ax"
+  },
+  {
+    "id": 126,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "追及相遇：画图+同一时刻位置相同"
+  },
+  {
+    "id": 127,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "力的概念：相互作用，力是矢量"
+  },
+  {
+    "id": 128,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "常见力：重力、支持力、拉力、弹力、摩擦力"
+  },
+  {
+    "id": 129,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "受力分析：先隔离物体，再画受力图"
+  },
+  {
+    "id": 130,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "牛顿第一定律：惯性与平衡状态"
+  },
+  {
+    "id": 131,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "牛顿第二定律：F合=ma（注意合外力）"
+  },
+  {
+    "id": 132,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "牛顿第三定律：作用力与反作用力（同一对力）"
+  },
+  {
+    "id": 133,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "摩擦力：静摩擦/滑动摩擦，方向与相对运动趋势相反"
+  },
+  {
+    "id": 134,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "斜面问题：分解重力，沿/垂直斜面列方程"
+  },
+  {
+    "id": 135,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "曲线运动：速度方向沿切线方向"
+  },
+  {
+    "id": 136,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "平抛运动：水平匀速+竖直匀加速（分运动思想）"
+  },
+  {
+    "id": 137,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "圆周运动：线速度 v=ωr，角速度 ω=Δθ/Δt"
+  },
+  {
+    "id": 138,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "向心加速度：a_c=v^2/r=ω^2 r"
+  },
+  {
+    "id": 139,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "向心力：F_c=mv^2/r（不是新力，是合力指向圆心）"
+  },
+  {
+    "id": 140,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "圆锥摆/水平圆周：找径向合力=向心力"
+  },
+  {
+    "id": 141,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "功：W=F s cosθ（与位移方向相关）"
+  },
+  {
+    "id": 142,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "功率：P=W/t=Fv（匀速且力与速度同向时）"
+  },
+  {
+    "id": 143,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "动能：E_k=1/2 m v^2（与速度平方成正比）"
+  },
+  {
+    "id": 144,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "重力势能：E_p=mgh（与高度有关）"
+  },
+  {
+    "id": 145,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "弹性势能：与形变量有关（弹簧）"
+  },
+  {
+    "id": 146,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "动能定理：W合=ΔE_k"
+  },
+  {
+    "id": 147,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "机械能守恒：只有重力/弹力做功时机械能守恒"
+  },
+  {
+    "id": 148,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "动量：p=mv（方向与速度一致）"
+  },
+  {
+    "id": 149,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "冲量：I=FΔt=Δp（力-时间的“累积效果”）"
+  },
+  {
+    "id": 150,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "动量守恒：系统合外力为零时总动量不变"
+  },
+  {
+    "id": 151,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "碰撞类型：弹性/非弹性/完全非弹性（能量损失不同）"
+  },
+  {
+    "id": 152,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "一维碰撞解题：选系统、定方向、列守恒方程"
+  },
+  {
+    "id": 153,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "矢量处理：先选正方向，再用正负号统一"
+  },
+  {
+    "id": 154,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "受力分析三步：隔离—画图—沿选定方向列式"
+  },
+  {
+    "id": 155,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "分运动思想：平抛/斜抛分解为水平与竖直"
+  },
+  {
+    "id": 156,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "能量法适用：与路径无关的力（重力、弹力）优先用能量"
+  },
+  {
+    "id": 157,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "图像题：x-t 斜率=速度；v-t 面积=位移；斜率=加速度"
+  },
+  {
+    "id": 158,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "圆周题：先找指向圆心的合力=向心力"
+  },
+  {
+    "id": 159,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "追及相遇：同一时刻位置相同；可用相对速度"
+  },
+  {
+    "id": 160,
+    "teacher_id": 3,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "守恒思想：系统选择是关键（动量守恒的“系统”）"
   }
 ]

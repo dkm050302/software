@@ -19,6 +19,7 @@
     "axios": "^1.6.2",
     "github-markdown-css": "^5.8.1",
     "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
     "mermaid": "^10.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

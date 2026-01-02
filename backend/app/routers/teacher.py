@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 import re
+import json
 from app import models
 from app.dependencies import get_db, get_current_user
 from app.services.llm_service import llm_service
@@ -42,10 +43,19 @@ def get_student_status(
         ).order_by(models.StudentSumUp.time.desc()).first()
         
         if sum_up and sum_up.tip:
+            # 尝试提取对应学科的内容
+            tip_content = extract_subject_content(sum_up.tip, teacher_subject)
+            
+            # 如果提取不到内容，且没有指定学科，或者提取失败但有原始内容（兼容旧数据），
+            # 这里策略是：如果指定了学科但没提取到，说明该学科没数据，返回空字符串。
+            # 如果没指定学科，返回整个 JSON 字符串（或者原始内容）。
+            if not teacher_subject:
+                tip_content = sum_up.tip
+            
             student_statuses.append({
                 "student_id": student.student_id,
                 "student_name": student.name,
-                "tip": sum_up.tip,
+                "tip": tip_content,
                 "time": sum_up.time.isoformat() if sum_up.time else None
             })
         else:
@@ -67,6 +77,16 @@ def extract_subject_content(tip: str, subject: str) -> str:
     """从tip中提取对应学科的内容"""
     if not tip or not subject:
         return ""
+    
+    # 尝试解析 JSON
+    try:
+        tip_dict = json.loads(tip)
+        if isinstance(tip_dict, dict):
+            if subject in tip_dict:
+                return tip_dict[subject]
+            return ""
+    except:
+        pass
     
     # 尝试多种格式匹配
     patterns = [

@@ -123,7 +123,7 @@ class LLMService:
 
     async def generate_weekly_report(self, context_json: str, subject: str = "总体") -> str:
         prompt = f"""
-        你是一个专业的学习顾问。请根据以下学生本周的学习记录（包含错题和笔记的简短分析），生成一份{subject}学习状况报告。
+        你是一个专业的学习顾问。请根据以下学生本周的学习记录（包含错题的简短分析），生成一份{subject}学习状况报告。
         
         输入数据 (JSON):
         {context_json}
@@ -188,29 +188,41 @@ class LLMService:
     async def generate_weekly_analysis(self, data: dict, subject: str = None) -> str:
         if subject and subject != "General":
             prompt = f'''
-            请根据以下学生在"{subject}"学科的错题和笔记数据，生成一份详细的学习报告。
-            报告必须使用 Markdown 格式编写，数学公式使用 LaTeX 语法并用 $ 或 $$ 包裹。
+            请根据以下学生在"{subject}"学科的错题数据，生成一份详细的学习报告。
+            
+            数据说明：
+            - 数据是一个 JSON 对象，包含 "mistakes" 列表。
+            - "mistakes" 列表中的每一项代表一道错题。
+            - 列表长度即为错题数量，请务必准确统计。
+            - "content" 字段是学生对该错题的笔记或个人理解。
+            - "tip" 字段是针对该错题的简短提示。
             
             数据: {json.dumps(data, ensure_ascii=False)}
             
             要求:
-            1. 分析错题和笔记情况。
-            2. 给出具体的学习建议。
-            3. 使用 Markdown 格式，数学公式用 $ 包裹（行内公式）或 $$ 包裹（块级公式）。
-            4. 不要包含代码块标记。
+            1. 首先明确指出本周共复习了多少道错题（根据 mistakes 列表长度）。
+            2. 仅根据提供的文本内容分析知识点掌握情况，不要臆测未提供的信息。
+            3. 给出具体的学习建议。
+            4. 使用 Markdown 格式，数学公式使用 LaTeX 语法并用 $ 或 $$ 包裹。
+            5. 不要包含代码块标记。
             '''
         else:
             prompt = f'''
-            请根据以下学生本周的学习数据（涵盖所有学科的错题和笔记），生成一份总体学习状况报告。
-            报告必须使用 Markdown 格式编写，数学公式使用 LaTeX 语法并用 $ 或 $$ 包裹。
+            请根据以下学生本周的学习数据（涵盖所有学科的错题），生成一份总体学习状况报告。
+            
+            数据说明：
+            - 数据是一个 JSON 对象，包含 "mistakes" 列表。
+            - "mistakes" 列表中的每一项代表一道错题。
+            - 列表长度即为错题数量，请务必准确统计。
+            - "content" 字段是学生对该错题的笔记或个人理解。
             
             数据: {json.dumps(data, ensure_ascii=False)}
             
             要求:
-            1. 总结整体学习状况。
-            2. 识别薄弱学科。
+            1. 首先明确指出本周共复习了多少道错题（根据 mistakes 列表长度）。
+            2. 仅根据提供的文本内容总结整体学习状况和薄弱学科，不要臆测未提供的信息。
             3. 给出总体学习建议。
-            4. 使用 Markdown 格式，数学公式用 $ 包裹（行内公式）或 $$ 包裹（块级公式）。
+            4. 使用 Markdown 格式，数学公式使用 LaTeX 语法并用 $ 或 $$ 包裹。
             5. 不要包含代码块标记。
             '''
 
@@ -228,6 +240,33 @@ class LLMService:
         except Exception as e:
             print(f"Error generating weekly analysis: {e}")
             return "无法生成报告。"
+
+    async def generate_weekly_summary_from_tips(self, tips: list, subject: str) -> str:
+        """
+        基于错题的 tip 列表生成简短总结 (用于 StudentSumUp)
+        """
+        tips_text = "\n".join([f"- {t}" for t in tips if t])
+        
+        prompt = f"""
+        以下是学生本周在"{subject}"学科中遇到的错题简要提示（Tips）：
+        
+        {tips_text}
+        
+        请根据这些提示，生成一段简短的周总结（100字以内）。
+        重点概括学生本周的主要错误类型和涉及的知识点，不要列举具体题目。
+        """
+        
+        messages = [
+            {"role": "system", "content": "你是一个善于总结的学习助手。"},
+            {"role": "user", "content": prompt}
+        ]
+        
+        try:
+            response = await self._call_deepseek(messages)
+            return response["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"Error generating summary from tips: {e}")
+            return "无法生成总结。"
 
     async def generate_mermaid(self, text: str) -> str:
         prompt = (

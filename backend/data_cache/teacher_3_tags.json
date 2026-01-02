@@ -1,1 +1,266 @@
-[]
+[
+  {
+    "id": 117,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "参考系与位移：位移是矢量，路程是标量"
+  },
+  {
+    "id": 118,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "速度与速率：速度=位移/时间，方向随位移"
+  },
+  {
+    "id": 119,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "加速度：速度变化快慢与方向（不等于速度大小）"
+  },
+  {
+    "id": 120,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "x-t 图像：斜率表示速度，曲率反映速度变化"
+  },
+  {
+    "id": 121,
+    "subject": "物理",
+    "chapter": "第一章 运动的描述",
+    "knowledge_point": "v-t 图像：斜率表示加速度，面积表示位移"
+  },
+  {
+    "id": 122,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "匀加速/匀减速的判定：加速度恒定"
+  },
+  {
+    "id": 123,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "基本公式：v=v0+at（方向用正负号统一）"
+  },
+  {
+    "id": 124,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "位移公式：x=v0 t + 1/2 a t^2"
+  },
+  {
+    "id": 125,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "速度位移关系：v^2=v0^2+2ax"
+  },
+  {
+    "id": 126,
+    "subject": "物理",
+    "chapter": "第二章 匀变速直线运动",
+    "knowledge_point": "追及相遇：画图+同一时刻位置相同"
+  },
+  {
+    "id": 127,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "力的概念：相互作用，力是矢量"
+  },
+  {
+    "id": 128,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "常见力：重力、支持力、拉力、弹力、摩擦力"
+  },
+  {
+    "id": 129,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "受力分析：先隔离物体，再画受力图"
+  },
+  {
+    "id": 130,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "牛顿第一定律：惯性与平衡状态"
+  },
+  {
+    "id": 131,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "牛顿第二定律：F合=ma（注意合外力）"
+  },
+  {
+    "id": 132,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "牛顿第三定律：作用力与反作用力（同一对力）"
+  },
+  {
+    "id": 133,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "摩擦力：静摩擦/滑动摩擦，方向与相对运动趋势相反"
+  },
+  {
+    "id": 134,
+    "subject": "物理",
+    "chapter": "第三章 相互作用与牛顿运动定律",
+    "knowledge_point": "斜面问题：分解重力，沿/垂直斜面列方程"
+  },
+  {
+    "id": 135,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "曲线运动：速度方向沿切线方向"
+  },
+  {
+    "id": 136,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "平抛运动：水平匀速+竖直匀加速（分运动思想）"
+  },
+  {
+    "id": 137,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "圆周运动：线速度 v=ωr，角速度 ω=Δθ/Δt"
+  },
+  {
+    "id": 138,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "向心加速度：a_c=v^2/r=ω^2 r"
+  },
+  {
+    "id": 139,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "向心力：F_c=mv^2/r（不是新力，是合力指向圆心）"
+  },
+  {
+    "id": 140,
+    "subject": "物理",
+    "chapter": "第四章 曲线运动与圆周运动",
+    "knowledge_point": "圆锥摆/水平圆周：找径向合力=向心力"
+  },
+  {
+    "id": 141,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "功：W=F s cosθ（与位移方向相关）"
+  },
+  {
+    "id": 142,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "功率：P=W/t=Fv（匀速且力与速度同向时）"
+  },
+  {
+    "id": 143,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "动能：E_k=1/2 m v^2（与速度平方成正比）"
+  },
+  {
+    "id": 144,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "重力势能：E_p=mgh（与高度有关）"
+  },
+  {
+    "id": 145,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "弹性势能：与形变量有关（弹簧）"
+  },
+  {
+    "id": 146,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "动能定理：W合=ΔE_k"
+  },
+  {
+    "id": 147,
+    "subject": "物理",
+    "chapter": "第五章 功与能",
+    "knowledge_point": "机械能守恒：只有重力/弹力做功时机械能守恒"
+  },
+  {
+    "id": 148,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "动量：p=mv（方向与速度一致）"
+  },
+  {
+    "id": 149,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "冲量：I=FΔt=Δp（力-时间的“累积效果”）"
+  },
+  {
+    "id": 150,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "动量守恒：系统合外力为零时总动量不变"
+  },
+  {
+    "id": 151,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "碰撞类型：弹性/非弹性/完全非弹性（能量损失不同）"
+  },
+  {
+    "id": 152,
+    "subject": "物理",
+    "chapter": "第六章 动量与碰撞（入门）",
+    "knowledge_point": "一维碰撞解题：选系统、定方向、列守恒方程"
+  },
+  {
+    "id": 153,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "矢量处理：先选正方向，再用正负号统一"
+  },
+  {
+    "id": 154,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "受力分析三步：隔离—画图—沿选定方向列式"
+  },
+  {
+    "id": 155,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "分运动思想：平抛/斜抛分解为水平与竖直"
+  },
+  {
+    "id": 156,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "能量法适用：与路径无关的力（重力、弹力）优先用能量"
+  },
+  {
+    "id": 157,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "图像题：x-t 斜率=速度；v-t 面积=位移；斜率=加速度"
+  },
+  {
+    "id": 158,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "圆周题：先找指向圆心的合力=向心力"
+  },
+  {
+    "id": 159,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "追及相遇：同一时刻位置相同；可用相对速度"
+  },
+  {
+    "id": 160,
+    "subject": "物理",
+    "chapter": "解题方法模块",
+    "knowledge_point": "守恒思想：系统选择是关键（动量守恒的“系统”）"
+  }
+]
