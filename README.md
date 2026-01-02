@@ -75,34 +75,40 @@ The frontend requires Node.js 16+ and npm. Key dependencies (see `frontend/packa
      ```
 
 3. Install Python dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Configure Whisper Model:
-   
+
    If you have a Whisper model compressed package:
-   
+
    - Extract the compressed package to a local directory (e.g., `C:\whisper-models` on Windows or `~/whisper-models` on Mac/Linux)
    - Add the extracted directory path to your system's PATH environment variable:
-     
+
      **Windows**:
+
      1. Open System Properties → Environment Variables
      2. Under "System variables", find and select "Path", then click "Edit"
      3. Click "New" and add the path to your Whisper models directory (e.g., `C:\whisper-models`)
      4. Click "OK" to save
-     
+
      **Mac/Linux**:
      Add the following line to your `~/.bashrc` or `~/.zshrc`:
+
      ```bash
      export PATH="$PATH:/path/to/whisper-models"
      ```
+
      Then reload your shell:
+
      ```bash
      source ~/.bashrc  # or source ~/.zshrc
      ```
-   
+
    Alternatively, Whisper will automatically download models on first use if no local model is found. The default model cache location is:
+
    - **Windows**: `C:\Users\<username>\.cache\whisper\`
    - **Mac/Linux**: `~/.cache/whisper/`
 
