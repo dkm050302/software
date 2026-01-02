@@ -82,7 +82,7 @@ The frontend requires Node.js 16+ and npm. Key dependencies (see `frontend/packa
 
 4. Configure Whisper Model:
 
-   If you have a Whisper model compressed package:
+   We provide a Whisper model compressed package named "ffmpeg-8.0.1-full_build-shared.7z":
 
    - Extract the compressed package to a local directory (e.g., `C:\whisper-models` on Windows or `~/whisper-models` on Mac/Linux)
    - Add the extracted directory path to your system's PATH environment variable:
@@ -207,3 +207,4 @@ Once the backend server is running, you can access the interactive API documenta
 
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
+
