@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 from app.services.ocr_service import ocr_service
 from app.services.llm_service import llm_service
+from app.services.local_storage import local_storage
 from app import models, schemas
 from app.dependencies import get_db, get_current_user
 
@@ -83,6 +84,7 @@ async def create_mistake(
     subject: str = Form(...),
     chapter: str = Form(...),
     knowledge_point: str = Form(...), # Expecting JSON string of list or comma separated
+    title: Optional[str] = Form(None),
     content: str = Form(...),
     note: str = Form(...),
     date: str = Form(...),
@@ -94,6 +96,19 @@ async def create_mistake(
     user = current_user_data["user"]
     if current_user_data["user_type"] != "student":
         raise HTTPException(status_code=403, detail="Only students can create mistakes")
+
+    # Handle title logic
+    if not title or not title.strip():
+        # If title is empty, use knowledge_point
+        # knowledge_point might be a JSON string or comma separated string
+        try:
+            kp_parsed = json.loads(knowledge_point)
+            if isinstance(kp_parsed, list):
+                title = ", ".join(kp_parsed)
+            else:
+                title = str(kp_parsed)
+        except:
+            title = knowledge_point
 
     # Save images
     upload_dir = "uploads/mistakes"
@@ -164,6 +179,7 @@ async def create_mistake(
         subject=subject,
         chapter=chapter,
         knowledge_point=knowledge_point,
+        title=title,
         content=content,
         note=note,
         tip=tip,
@@ -175,6 +191,28 @@ async def create_mistake(
         db.add(mistake)
         db.commit()
         db.refresh(mistake)
+        
+        # Save to local storage
+        try:
+            local_storage.create_mistake_entry(
+                student_id=user.student_id,
+                chapter=chapter,
+                title=title,
+                content=content,
+                note=note,
+                graph_1_src_path=graph_1_path,
+                graph_2_src_path=graph_2_path,
+                metadata={
+                    "subject": subject,
+                    "knowledge_point": knowledge_point,
+                    "date": date,
+                    "tip": tip
+                }
+            )
+        except Exception as e:
+            print(f"Error saving to local storage: {e}")
+            # We don't rollback DB transaction here as the primary storage is DB
+            
     except Exception as e:
         db.rollback()
         # 如果数据库操作失败，尝试删除已保存的图片
@@ -213,150 +251,31 @@ async def analyze_problem(request: AnalyzeRequest):
         print(f"Error in analyze_problem: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/list")
-def get_mistakes(
-    subject: Optional[str] = None,
-    chapter: Optional[str] = None,
-    knowledge_points: Optional[str] = None, # Comma separated or JSON string
-    db: Session = Depends(get_db),
-    current_user_data: dict = Depends(get_current_user)
-):
-    if current_user_data["user_type"] != "student":
-        raise HTTPException(status_code=403, detail="Only students can view their mistakes")
+from app.routers.dashboard import get_week_range
+
+def cleanup_weekly_mistakes(db: Session, student_id: str):
+    """
+    Deletes mistakes from the database that are older than the current week's start.
+    """
+    start_week, _ = get_week_range()
     
-    user = current_user_data["user"]
-    query = db.query(models.LearningMistake).filter(models.LearningMistake.student_id == user.student_id)
-    
-    if subject:
-        query = query.filter(models.LearningMistake.subject == subject)
-    if chapter:
-        query = query.filter(models.LearningMistake.chapter == chapter)
-        
-    mistakes = query.all()
-    
-    # Filter by knowledge points in Python
-    if knowledge_points:
-        try:
-            # Try parsing as JSON first
-            kp_filter = json.loads(knowledge_points)
-            if not isinstance(kp_filter, list):
-                kp_filter = [knowledge_points]
-        except:
-            # Fallback to comma separated
-            kp_filter = [kp.strip() for kp in knowledge_points.split(',') if kp.strip()]
-            
-        if kp_filter:
-            filtered_mistakes = []
-            for m in mistakes:
-                if not m.knowledge_point:
-                    continue
-                try:
-                    # Parse stored knowledge points
-                    # It might be stored as JSON string or plain string
-                    try:
-                        m_kps = json.loads(m.knowledge_point)
-                        if not isinstance(m_kps, list):
-                            m_kps = [m.knowledge_point]
-                    except:
-                        m_kps = [kp.strip() for kp in m.knowledge_point.split(',') if kp.strip()]
-                    
-                    # Check if all filter tags are present in the mistake's tags
-                    if set(kp_filter).issubset(set(m_kps)):
-                        filtered_mistakes.append(m)
-                except Exception as e:
-                    print(f"Error parsing knowledge point for mistake {m.id}: {e}")
-                    continue
-            mistakes = filtered_mistakes
-
-    return mistakes
-
-class MistakeUpdate(BaseModel):
-    content: Optional[str] = None
-    note: Optional[str] = None
-
-@router.put("/{mistake_id}")
-def update_mistake(
-    mistake_id: int,
-    update_data: MistakeUpdate,
-    db: Session = Depends(get_db),
-    current_user_data: dict = Depends(get_current_user)
-):
-    if current_user_data["user_type"] != "student":
-        raise HTTPException(status_code=403, detail="Only students can update mistakes")
-        
-    mistake = db.query(models.LearningMistake).filter(models.LearningMistake.id == mistake_id).first()
-    if not mistake:
-        raise HTTPException(status_code=404, detail="Mistake not found")
-        
-    if mistake.student_id != current_user_data["user"].student_id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this mistake")
-        
-    if update_data.content is not None:
-        mistake.content = update_data.content
-    if update_data.note is not None:
-        mistake.note = update_data.note
-        
-    db.commit()
-    db.refresh(mistake)
-    return mistake
-
-@router.delete("/{mistake_id}")
-def delete_mistake(
-    mistake_id: int,
-    db: Session = Depends(get_db),
-    current_user_data: dict = Depends(get_current_user)
-):
-    if current_user_data["user_type"] != "student":
-        raise HTTPException(status_code=403, detail="Only students can delete mistakes")
-        
-    mistake = db.query(models.LearningMistake).filter(models.LearningMistake.id == mistake_id).first()
-    if not mistake:
-        raise HTTPException(status_code=404, detail="Mistake not found")
-        
-    if mistake.student_id != current_user_data["user"].student_id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this mistake")
-        
-    # Delete files
-    if mistake.graph_1 and os.path.exists(mistake.graph_1):
-        try:
-            os.remove(mistake.graph_1)
-        except:
-            pass
-    if mistake.graph_2 and os.path.exists(mistake.graph_2):
-        try:
-            os.remove(mistake.graph_2)
-        except:
-            pass
-            
-    db.delete(mistake)
-    db.commit()
-    return {"message": "Mistake deleted successfully"}
-
-class BatchDeleteRequest(BaseModel):
-    ids: List[int]
-
-@router.post("/batch-delete")
-def batch_delete_mistakes(
-    request: BatchDeleteRequest,
-    db: Session = Depends(get_db),
-    current_user_data: dict = Depends(get_current_user)
-):
-    if current_user_data["user_type"] != "student":
-        raise HTTPException(status_code=403, detail="Only students can delete mistakes")
-    
-    user = current_user_data["user"]
-    
-    # Fetch mistakes to verify ownership and get file paths
-    mistakes = db.query(models.LearningMistake).filter(
-        models.LearningMistake.id.in_(request.ids),
-        models.LearningMistake.student_id == user.student_id
+    # Find old mistakes
+    old_mistakes = db.query(models.LearningMistake).filter(
+        models.LearningMistake.student_id == student_id,
+        models.LearningMistake.date < start_week
     ).all()
     
-    if not mistakes:
-        return {"message": "No matching mistakes found to delete"}
+    if not old_mistakes:
+        return
         
-    for mistake in mistakes:
-        # Delete files
+    print(f"Cleaning up {len(old_mistakes)} old mistakes for student {student_id}")
+    
+    for mistake in old_mistakes:
+        # We ONLY delete from DB, keeping local files intact as archive
+        # We also delete the 'uploads' files to save space on server if they are considered temporary
+        # But wait, the user said "storage to local".
+        # If we delete from DB, we should probably delete from 'uploads' too, 
+        # assuming 'local storage' (data folder) is the permanent one.
         if mistake.graph_1 and os.path.exists(mistake.graph_1):
             try:
                 os.remove(mistake.graph_1)
@@ -370,4 +289,256 @@ def batch_delete_mistakes(
         db.delete(mistake)
         
     db.commit()
-    return {"message": f"Successfully deleted {len(mistakes)} mistakes"}
+
+@router.get("/list")
+def get_mistakes(
+    subject: Optional[str] = None,
+    chapter: Optional[str] = None,
+    knowledge_points: Optional[str] = None, # Comma separated or JSON string
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can view their mistakes")
+    
+    user = current_user_data["user"]
+    
+    # 1. Cleanup old mistakes from DB
+    cleanup_weekly_mistakes(db, user.student_id)
+    
+    # 2. Read from Local Storage
+    mistakes = local_storage.list_mistakes(user.student_id)
+    
+    # 3. Filter in memory
+    if subject and subject != "__ALL__":
+        mistakes = [m for m in mistakes if m.get("subject") == subject]
+        
+    if chapter:
+        mistakes = [m for m in mistakes if m.get("chapter") == chapter]
+        
+    if knowledge_points:
+        try:
+            kp_filter = json.loads(knowledge_points)
+            if not isinstance(kp_filter, list):
+                kp_filter = [knowledge_points]
+        except:
+            kp_filter = [kp.strip() for kp in knowledge_points.split(',') if kp.strip()]
+            
+        if kp_filter:
+            filtered_mistakes = []
+            for m in mistakes:
+                m_kp_str = m.get("knowledge_point", "")
+                if not m_kp_str:
+                    continue
+                try:
+                    try:
+                        m_kps = json.loads(m_kp_str)
+                        if not isinstance(m_kps, list):
+                            m_kps = [m_kp_str]
+                    except:
+                        m_kps = [kp.strip() for kp in m_kp_str.split(',') if kp.strip()]
+                    
+                    if set(kp_filter).issubset(set(m_kps)):
+                        filtered_mistakes.append(m)
+                except:
+                    continue
+            mistakes = filtered_mistakes
+
+    return mistakes
+
+class MistakeUpdate(BaseModel):
+    content: Optional[str] = None
+    note: Optional[str] = None
+    title: Optional[str] = None
+
+@router.put("/{mistake_id}")
+def update_mistake(
+    mistake_id: str,
+    update_data: MistakeUpdate,
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can update mistakes")
+    
+    user = current_user_data["user"]
+    
+    # Try to parse mistake_id as int (DB ID) or string (Local ID)
+    db_mistake = None
+    local_chapter = None
+    local_title = None
+    
+    if mistake_id.isdigit():
+        # It's a DB ID
+        db_mistake = db.query(models.LearningMistake).filter(models.LearningMistake.id == int(mistake_id)).first()
+    else:
+        # It's a Local ID (base64 encoded "chapter::title")
+        try:
+            import base64
+            decoded = base64.urlsafe_b64decode(mistake_id).decode()
+            local_chapter, local_title = decoded.split("::")
+            
+            # Try to find in DB by chapter/title/student just in case
+            db_mistake = db.query(models.LearningMistake).filter(
+                models.LearningMistake.student_id == user.student_id,
+                models.LearningMistake.chapter == local_chapter,
+                models.LearningMistake.title == local_title
+            ).first()
+        except:
+            raise HTTPException(status_code=400, detail="Invalid mistake ID format")
+
+    # If found in DB, update DB
+    if db_mistake:
+        if db_mistake.student_id != user.student_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+            
+        old_chapter = db_mistake.chapter
+        old_title = db_mistake.title
+        
+        if update_data.content is not None:
+            db_mistake.content = update_data.content
+        if update_data.note is not None:
+            db_mistake.note = update_data.note
+        if update_data.title is not None:
+            db_mistake.title = update_data.title
+            
+        db.commit()
+        db.refresh(db_mistake)
+        
+        # Update Local
+        try:
+            local_storage.update_mistake_entry(
+                student_id=user.student_id,
+                old_chapter=old_chapter,
+                old_title=old_title,
+                new_chapter=db_mistake.chapter,
+                new_title=db_mistake.title,
+                new_content=update_data.content,
+                new_note=update_data.note
+            )
+        except Exception as e:
+            print(f"Error updating local storage: {e}")
+            
+        return db_mistake
+        
+    elif local_chapter and local_title:
+        # Only in Local Storage
+        try:
+            new_title = update_data.title if update_data.title else local_title
+            local_storage.update_mistake_entry(
+                student_id=user.student_id,
+                old_chapter=local_chapter,
+                old_title=local_title,
+                new_chapter=local_chapter, # We don't support changing chapter via update yet
+                new_title=new_title,
+                new_content=update_data.content,
+                new_note=update_data.note
+            )
+            return {"message": "Local mistake updated", "id": mistake_id}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to update local mistake: {e}")
+            
+    else:
+        raise HTTPException(status_code=404, detail="Mistake not found")
+
+@router.delete("/{mistake_id}")
+def delete_mistake(
+    mistake_id: str,
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can delete mistakes")
+        
+    user = current_user_data["user"]
+    
+    db_mistake = None
+    local_chapter = None
+    local_title = None
+    
+    if mistake_id.isdigit():
+        db_mistake = db.query(models.LearningMistake).filter(models.LearningMistake.id == int(mistake_id)).first()
+    else:
+        try:
+            import base64
+            decoded = base64.urlsafe_b64decode(mistake_id).decode()
+            local_chapter, local_title = decoded.split("::")
+            
+            db_mistake = db.query(models.LearningMistake).filter(
+                models.LearningMistake.student_id == user.student_id,
+                models.LearningMistake.chapter == local_chapter,
+                models.LearningMistake.title == local_title
+            ).first()
+        except:
+            pass # Might be invalid ID or just not found
+
+    # Delete from DB if exists
+    if db_mistake:
+        if db_mistake.student_id != user.student_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+            
+        # Delete files
+        if db_mistake.graph_1 and os.path.exists(db_mistake.graph_1):
+            try: os.remove(db_mistake.graph_1)
+            except: pass
+        if db_mistake.graph_2 and os.path.exists(db_mistake.graph_2):
+            try: os.remove(db_mistake.graph_2)
+            except: pass
+            
+        # Use DB info to delete local
+        try:
+            local_storage.delete_mistake_entry(
+                student_id=user.student_id,
+                chapter=db_mistake.chapter,
+                title=db_mistake.title
+            )
+        except Exception as e:
+            print(f"Error deleting from local storage: {e}")
+            
+        db.delete(db_mistake)
+        db.commit()
+        
+    elif local_chapter and local_title:
+        # Only Local
+        try:
+            local_storage.delete_mistake_entry(
+                student_id=user.student_id,
+                chapter=local_chapter,
+                title=local_title
+            )
+        except Exception as e:
+            print(f"Error deleting from local storage: {e}")
+            
+    else:
+        raise HTTPException(status_code=404, detail="Mistake not found")
+        
+    return {"message": "Mistake deleted successfully"}
+
+class BatchDeleteRequest(BaseModel):
+    ids: List[str]
+
+@router.post("/batch-delete")
+def batch_delete_mistakes(
+    request: BatchDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user_data: dict = Depends(get_current_user)
+):
+    if current_user_data["user_type"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can delete mistakes")
+    
+    user = current_user_data["user"]
+    
+    # We need to handle both DB IDs and Local IDs
+    # This is complex for batch delete.
+    # We will iterate and call delete logic for each.
+    
+    deleted_count = 0
+    
+    for mistake_id in request.ids:
+        try:
+            delete_mistake(mistake_id, db, current_user_data)
+            deleted_count += 1
+        except Exception as e:
+            print(f"Error deleting mistake {mistake_id}: {e}")
+            
+    return {"message": f"Successfully deleted {deleted_count} mistakes"}

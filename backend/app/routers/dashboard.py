@@ -8,6 +8,7 @@ from .. import models, schemas
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..services.llm_service import llm_service
+from ..services.local_storage import local_storage
 
 router = APIRouter()
 
@@ -249,6 +250,16 @@ async def analyze_weekly_report(
     # 4. Save JSON file
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(full_data, f, ensure_ascii=False, indent=2)
+
+    # Save to local storage
+    try:
+        local_storage.save_weekly_report(
+            student_id=user.student_id,
+            report_data=full_data,
+            filename=os.path.basename(file_path)
+        )
+    except Exception as e:
+        print(f"Error saving weekly report to local storage: {e}")
 
     # 5. Save to DB
     if existing_tip_entry:

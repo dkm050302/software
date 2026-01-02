@@ -1,0 +1,33 @@
+Register file
+
+
+
+A 2-port register file is needed to read the two source registers at the same time.
+
+
+
+Two separate outputs (A and B), and two address inputs to select the two registers to be read, which are connected to the fields in the IR that specify the source registers.
+
+
+
+Also has a data input, C, and a corresponding address input to select the destination register, which is connected to the IR field that specifies the destination register.
+
+
+
+Input data
+
+C
+
+Register file
+
+Address A
+
+Address B
+
+A
+
+B
+
+Address C
+
+Output data

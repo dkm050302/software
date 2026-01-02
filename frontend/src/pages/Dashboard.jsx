@@ -82,34 +82,6 @@ export default function Dashboard() {
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>Learning Dashboard</Typography>
       
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h6" color="primary">Mistakes This Week</Typography>
-            <Typography variant="h3">{stats?.mistake_count || 0}</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h6" color="primary">Notes This Week</Typography>
-            <Typography variant="h3">{stats?.note_count || 0}</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h6" color="primary">Study Hours</Typography>
-            <Typography variant="h3">{stats?.study_hours || 0}</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h6" color="primary">Progress</Typography>
-            <Typography variant="h3">{stats?.progress || 0}%</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
       {/* Report Section */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" gutterBottom>Weekly Learning Report</Typography>

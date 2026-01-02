@@ -85,6 +85,7 @@ class LearningMistake(Base):
     content = Column(Text, nullable=True)  # 内容 (支持混合文段)
     chapter = Column(String, nullable=True)  # 章节
     knowledge_point = Column(String, nullable=True)  # 知识点
+    title = Column(String, nullable=True)  # 标题
     graph_1 = Column(String, nullable=False, default="")  # 必填，存图片路径
     graph_2 = Column(String, nullable=True)   # 选填，存图片路径
     note = Column(Text, nullable=True)        # 笔记，混合文段

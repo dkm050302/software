@@ -48,10 +48,16 @@ app.add_middleware(
 # Ensure uploads directory exists
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOADS_DIR = BASE_DIR / "uploads"
+DATA_DIR = BASE_DIR / "data"
+
 if not UPLOADS_DIR.exists():
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
+if not DATA_DIR.exists():
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+app.mount("/api/data", StaticFiles(directory=str(DATA_DIR)), name="data")
 
 # Include Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])

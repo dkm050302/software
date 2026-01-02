@@ -22,6 +22,7 @@ export default function ErrorBook() {
   const [selectedKnowledgePoints, setSelectedKnowledgePoints] = useState([]);
   const [customKnowledgePoint, setCustomKnowledgePoint] = useState('');
   const [isOtherSelected, setIsOtherSelected] = useState(false);
+  const [title, setTitle] = useState('');
   
   // File State
   const [file, setFile] = useState(null); // graph_1 (Mistake Image)
@@ -205,6 +206,7 @@ export default function ErrorBook() {
     const formData = new FormData();
     formData.append('subject', selectedSubject);
     formData.append('chapter', selectedChapter);
+    formData.append('title', title);
     
     // Combine standard points and custom point
     let finalKnowledgePoints = selectedKnowledgePoints.filter(kp => kp !== '__OTHER__');
@@ -263,6 +265,16 @@ export default function ErrorBook() {
             
             {/* Selectors */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="标题 (Title)"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="若不填，将自动使用知识点作为标题"
+                  helperText="可选：为这道错题起个名字"
+                />
+              </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>学科 (Subject)</InputLabel>

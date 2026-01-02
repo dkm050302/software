@@ -51,6 +51,7 @@ export default function ViewErrorBook() {
   const [selectedMistake, setSelectedMistake] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [editNote, setEditNote] = useState('');
+  const [editTitle, setEditTitle] = useState('');
   const [saving, setSaving] = useState(false);
   
   // Image refresh state
@@ -58,6 +59,10 @@ export default function ViewErrorBook() {
 
   // Batch Selection State
   const [selectedIds, setSelectedIds] = useState([]);
+
+  // Title Editing State
+  const [editingTitleId, setEditingTitleId] = useState(null);
+  const [tempTitle, setTempTitle] = useState('');
 
   // Fetch Initial Data
   useEffect(() => {
@@ -187,10 +192,12 @@ export default function ViewErrorBook() {
     if (selectedMistake?.id === mistake.id) {
       setSelectedMistake(null);
       setEditContent('');
-      setEditNote('');
+      setEditTitle('');
     } else {
       setSelectedMistake(mistake);
       setEditContent(mistake.content || '');
+      setEditNote(mistake.note || '');
+      setEditTitle(mistake.titlcontent || '');
       setEditNote(mistake.note || '');
     }
   };
@@ -263,7 +270,8 @@ export default function ViewErrorBook() {
     try {
       const res = await api.put(`/errors/${selectedMistake.id}`, {
         content: editContent,
-        note: editNote
+        note: editNote,
+        title: editTitle
       });
       
       // Update local state
@@ -290,6 +298,48 @@ export default function ViewErrorBook() {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
     }, 0);
+  };
+
+  // Title Editing Handlers
+  const handleTitleDoubleClick = (e, mistake) => {
+    e.stopPropagation(); // Prevent row selection
+    setEditingTitleId(mistake.id);
+    setTempTitle(mistake.title || '');
+    
+    // Also select the row if not selected
+    if (selectedMistake?.id !== mistake.id) {
+      handleRowClick(mistake);
+    }
+  };
+
+  const handleTitleChange = (e) => {
+    setTempTitle(e.target.value);
+  };
+
+  const handleTitleBlur = (mistakeId) => {
+    if (editingTitleId !== mistakeId) return;
+    
+    // Update local state only (optimistic update for display)
+    // And update the editTitle state for the detail view
+    const updatedMistakes = mistakes.map(m => 
+      m.id === mistakeId ? { ...m, title: tempTitle } : m
+    );
+    setMistakes(updatedMistakes);
+    
+    if (selectedMistake && selectedMistake.id === mistakeId) {
+      setSelectedMistake({ ...selectedMistake, title: tempTitle });
+      setEditTitle(tempTitle);
+    }
+    
+    setEditingTitleId(null);
+  };
+
+  const handleTitleKeyDown = (e, mistakeId) => {
+    if (e.key === 'Enter') {
+      handleTitleBlur(mistakeId);
+    } else if (e.key === 'Escape') {
+      setEditingTitleId(null);
+    }
   };
 
   return (
@@ -439,7 +489,7 @@ export default function ViewErrorBook() {
                       />
                     </TableCell>
                   )}
-                  <TableCell>Content</TableCell>
+                  <TableCell>Title</TableCell>
                   <TableCell>Note</TableCell>
                 </TableRow>
               </TableHead>
@@ -451,6 +501,8 @@ export default function ViewErrorBook() {
                 ) : (
                   mistakes.map((mistake) => {
                     const isItemSelected = selectedIds.indexOf(mistake.id) !== -1;
+                    const isEditing = editingTitleId === mistake.id;
+                    
                     return (
                       <TableRow 
                         key={mistake.id} 
@@ -467,8 +519,24 @@ export default function ViewErrorBook() {
                             />
                           </TableCell>
                         )}
-                        <TableCell sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {mistake.content}
+                        <TableCell 
+                          sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          onDoubleClick={(e) => !isParent && handleTitleDoubleClick(e, mistake)}
+                        >
+                          {isEditing ? (
+                            <TextField
+                              value={tempTitle}
+                              onChange={handleTitleChange}
+                              onBlur={() => handleTitleBlur(mistake.id)}
+                              onKeyDown={(e) => handleTitleKeyDown(e, mistake.id)}
+                              autoFocus
+                              size="small"
+                              fullWidth
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : (
+                            mistake.title || <span style={{ color: '#999', fontStyle: 'italic' }}>No Title</span>
+                          )}
                         </TableCell>
                         <TableCell sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {mistake.note}
@@ -508,10 +576,15 @@ export default function ViewErrorBook() {
                     )}
                   </Box>
                   {selectedMistake.graph_1 && (() => {
-                    // Handle both old format (uploads/mistakes/xxx.jpg) and new format (mistakes/xxx.jpg)
-                    const imagePath = selectedMistake.graph_1.startsWith('uploads/') 
-                      ? selectedMistake.graph_1.substring(8) 
-                      : selectedMistake.graph_1;
+                    let imageUrl;
+                    if (selectedMistake.graph_1.startsWith('/data/')) {
+                        imageUrl = `/api${selectedMistake.graph_1}`;
+                    } else if (selectedMistake.graph_1.startsWith('uploads/')) {
+                        imageUrl = `/api/uploads/${selectedMistake.graph_1.substring(8)}`;
+                    } else {
+                        imageUrl = `/api/uploads/${selectedMistake.graph_1}`;
+                    }
+
                     return (
                       <Box sx={{ mb: 2, position: 'relative' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
@@ -526,12 +599,11 @@ export default function ViewErrorBook() {
                         </Box>
                         <img 
                           key={`graph1-${imageRefreshKey}`}
-                          src={`/api/uploads/${imagePath}?t=${Date.now()}`} 
+                          src={`${imageUrl}?t=${Date.now()}`} 
                           alt="Mistake" 
                           style={{ maxWidth: '100%', maxHeight: 300 }} 
                           onError={(e) => {
                             console.error('Failed to load image:', selectedMistake.graph_1);
-                            console.error('Processed path:', imagePath);
                             console.error('Attempted URL:', e.target.src);
                           }}
                         />
@@ -586,10 +658,15 @@ export default function ViewErrorBook() {
                     )}
                   </Box>
                   {selectedMistake.graph_2 && (() => {
-                    // Handle both old format (uploads/mistakes/xxx.jpg) and new format (mistakes/xxx.jpg)
-                    const imagePath = selectedMistake.graph_2.startsWith('uploads/') 
-                      ? selectedMistake.graph_2.substring(8) 
-                      : selectedMistake.graph_2;
+                    let imageUrl;
+                    if (selectedMistake.graph_2.startsWith('/data/')) {
+                        imageUrl = `/api${selectedMistake.graph_2}`;
+                    } else if (selectedMistake.graph_2.startsWith('uploads/')) {
+                        imageUrl = `/api/uploads/${selectedMistake.graph_2.substring(8)}`;
+                    } else {
+                        imageUrl = `/api/uploads/${selectedMistake.graph_2}`;
+                    }
+
                     return (
                       <Box sx={{ mb: 2, position: 'relative' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
@@ -604,12 +681,11 @@ export default function ViewErrorBook() {
                         </Box>
                         <img 
                           key={`graph2-${imageRefreshKey}`}
-                          src={`/api/uploads/${imagePath}?t=${Date.now()}`} 
+                          src={`${imageUrl}?t=${Date.now()}`} 
                           alt="Analysis" 
                           style={{ maxWidth: '100%', maxHeight: 300 }} 
                           onError={(e) => {
                             console.error('Failed to load image:', selectedMistake.graph_2);
-                            console.error('Processed path:', imagePath);
                             console.error('Attempted URL:', e.target.src);
                           }}
                         />
